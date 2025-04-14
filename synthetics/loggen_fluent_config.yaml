@@ -1,0 +1,80 @@
+fileConfigs:
+  01_sources.conf: |-
+    <source>
+      @type tail
+      @label @FLUENT_FORWARD
+      path /var/log/containers/mdai-logger*.log
+      pos_file /var/log/fluentd/fluentd-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type multi_format
+        <pattern>
+          format regexp
+          expression (?<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}) - (?<logger>service\d+) - (?<team>[a-zA-Z0-9]+) - (?<region>[a-zA-Z0-9-]+) - (?<level>INFO|ERROR|WARNING) - (?<message>.+)
+          time_format %Y-%m-%dT%H:%M:%S%z
+        </pattern>
+        <pattern>
+          format none
+        </pattern>
+      </parse>
+    </source>
+
+    # Expose metrics in Prometheus format
+    <source>
+      @type prometheus
+      bind 0.0.0.0
+      port 24231
+      metrics_path /metrics
+    </source>
+
+    <label @FLUENT_FORWARD>
+      <filter kubernetes.**>
+        @type grep
+      </filter>
+
+      <match kubernetes.**>
+        @type forward
+        <buffer>
+          @type file
+          path /var/log/fluentd/buffer
+          flush_at_shutdown true
+          flush_mode interval
+          flush_interval 5s
+          retry_forever true
+          retry_max_interval 30s
+          chunk_limit_size 8MB
+          queue_limit_length 256
+        </buffer>
+        <server>
+          host gateway-collector.mdai.svc.cluster.local
+          port 8006
+        </server>
+      </match>
+    </label>
+
+
+
+  02_filters.conf: ""
+
+  03_dispatch.conf: ""
+
+  04_outputs.conf: ""
+
+fluentd:
+  resources:
+    limits:
+      memory: 200Mi
+      cpu: 100m
+    requests:
+      memory: 100Mi
+      cpu: 50m
+
+  # Mount the necessary directories to access pod logs
+  extraVolumeMounts:
+    - name: varlog
+      mountPath: /var/log
+  extraVolumes:
+    - name: varlog
+      hostPath:
+        path: /var/log

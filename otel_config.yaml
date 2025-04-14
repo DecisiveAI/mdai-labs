@@ -1,0 +1,204 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    mdaihub-name: mdaihub-sample
+  name: gateway
+  namespace: mdai
+spec:
+  image: otel/opentelemetry-collector-contrib:0.117.0
+  envFrom:
+    - configMapRef:
+        # this is the config map which will store your variables that your collector will use
+        name: mdaihub-sample-variables
+  config:
+    receivers:
+      fluentforward:
+        endpoint: '${env:MY_POD_IP}:8006'
+      otlp:
+        protocols:
+          grpc:
+            endpoint: '${env:MY_POD_IP}:4317'
+          http:
+            endpoint: '${env:MY_POD_IP}:4318'
+            # Since this collector needs to receive data from the web, enable cors for all origins
+            # `allowed_origins` can be refined for your deployment domain
+            cors:
+              allowed_origins:
+                - "http://*"
+                - "https://*"
+
+    extensions:
+      # The health_check extension is mandatory for this chart.
+      # Without the health_check extension the collector will fail the readiness and liveliness probes.
+      # The health_check extension can be modified, but should never be removed.
+      health_check:
+        endpoint: "${env:MY_POD_IP}:13133"
+
+    processors:
+      memory_limiter:
+        check_interval: 23s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+      batch:
+        send_batch_size: 10000
+        timeout: 13s
+
+      groupbyattrs:
+        keys:
+          - logger
+
+      resource/observer_receiver_tag:
+        attributes:
+          - key: observer_direction
+            value: "received"
+            action: upsert
+
+      resource/observer_exporter_tag:
+        attributes:
+          - key: observer_direction
+            value: "exported"
+            action: upsert
+
+      filter/severity:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'attributes["level"] == "INFO"'
+
+      filter/service_list:
+        error_mode: ignore
+        logs:
+          log_record:
+            # below is an example of how an environment variable configured in the mdai_v1_mdaihub_sample_config_0_6_0.yaml can be used in an opentelemetry collector config
+            - 'IsMatch(attributes["logger"], "${env:SERVICE_LIST_REGEX}")'
+
+      # ~~~ MANAGE STATE ~~~~~
+      #
+      # The following attribute blocks add log transform state to logs
+      #   1. RECEIVED
+      #   2. NORMALIZED
+      #   3. FILTERED
+      #   3. EXPORTED
+
+      attributes/state_received:
+        actions:
+          - key: "mdai_pipeline_state"
+            action: insert
+            value: "RECEIVED"
+
+      attributes/state_normalized:
+        actions:
+          - key: "mdai_pipeline_state"
+            action: upsert
+            value: "NORMALIZED"
+
+      attributes/state_filtered:
+        actions:
+          - key: "mdai_pipeline_state"
+            action: upsert
+            value: "FILTERED"
+
+      attributes/state_exported:
+        actions:
+          - key: "mdai_pipeline_state"
+            action: upsert
+            value: "EXPORTED"
+
+    exporters:
+      debug/observer: { }
+      debug/storage: { }
+
+      debug/detailed:
+        verbosity: detailed
+        sampling_initial: 2
+        sampling_thereafter: 100
+
+      otlp/observer:
+        endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+    connectors:
+      routing/normalize:
+        match_once: true
+        table:
+          - context: log
+            condition: attributes["mdai_pipeline_state"] == "RECEIVED"
+            pipelines: [logs/normalize]
+
+      routing/filter:
+        match_once: true
+        table:
+          - context: log
+            condition: attributes["mdai_pipeline_state"] == "NORMALIZED"
+            pipelines: [logs/filter, logs/observer_receivers ]
+
+      routing/external:
+        match_once: true
+        table:
+          - context: log
+            condition: attributes["mdai_pipeline_state"] == "FILTERED"
+            pipelines: [logs/route_to_external, logs/observer_exporters]
+
+    service:
+      telemetry:
+        metrics:
+          address: ":8888"
+      extensions:
+        - health_check
+      pipelines:
+        logs/fluent:
+          receivers: [ fluentforward ]
+          processors: [attributes/state_received]
+          exporters: [ routing/normalize ]
+
+        logs/normalize:
+          receivers: [ routing/normalize ]
+          processors: [
+            attributes/state_normalized
+          ]
+          exporters: [ routing/filter]
+
+        logs/filter:
+          receivers: [ routing/filter ]
+          processors: [
+            filter/service_list,
+            attributes/state_filtered
+          ]
+          exporters: [ routing/external ]
+
+        logs/route_to_external:
+          receivers: [ routing/external ]
+          processors: [ attributes/state_exported ]
+          exporters: [debug/storage]
+
+        # the following pipelines are for observers
+        logs/observer_receivers:
+          # DO NOT change this connector without caution.
+          # We add mdai_application in the logs/normalize pipeline.
+          # This field is required for watching.
+          # Pipeline logs/observer_receivers must be after normalization pipeline and before filtering occurs
+          receivers: [ routing/filter ]
+          processors: [
+            resource/observer_receiver_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ debug/observer, otlp/observer ]
+
+        logs/observer_exporters:
+          receivers: [ routing/external ]
+          processors: [
+            resource/observer_exporter_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch,
+          ]
+          exporters: [ debug/observer, otlp/observer ]

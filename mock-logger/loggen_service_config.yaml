@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log-generator-script
+data:
+  log_generator.py: |
+    import random
+    import json
+    from datetime import datetime, timedelta
+    import sys
+
+    # Generate mock logs
+    def generate_mock_logs(num_logs=10):
+        log_levels = ["INFO", "ERROR", "WARN", "DEBUG"]
+        services = ["auth-service", "user-service", "payment-service", "order-service", "inventory-service"]
+        actions = ["login", "payment", "order", "signup", "inventory-check", "logout"]
+
+
+        for _ in range(num_logs):
+            log = {
+                "timestamp": (datetime.now() - timedelta(minutes=random.randint(0, 60))).isoformat(),
+                "level": random.choice(log_levels),
+                "service": random.choice(services),
+                "action": random.choice(actions),
+                "message": f"Action {random.choice(actions)} processed successfully",
+                "user_id": random.randint(1000, 9999),
+                "transaction_id": random.randint(100000, 999999),
+                "duration": random.randint(50, 200),  # in ms
+                "status": random.choice(["success", "failure"])
+            }
+            print(log)
+
+
+    # Generate 20 mock logs
+    mock_logs = generate_mock_logs(20)
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-generator
+  template:
+    metadata:
+      labels:
+        app: log-generator
+    spec:
+      containers:
+      - name: log-generator
+        image: python:3.9-slim  # Use a lightweight Python image
+        command: ["python3", "/app/log_generator.py"]
+        volumeMounts:
+        - name: script-volume
+          mountPath: /app  # Mount the config map containing the script
+      volumes:
+      - name: script-volume
+        configMap:
+          name: log-generator-script
