@@ -29,20 +29,6 @@ spec:
       # below properties are optional
       type: set
       storageType: "mdai-valkey"
-    - storageKey: team_list
-      defaultValue: "n/a"
-      serializeAs:
-        - name: "TEAM_LIST_REGEX"
-          transformer:
-            join:
-              delimiter: "|"
-        - name: "TEAM_LIST_CSV"
-          transformer:
-            join:
-              delimiter: ","
-      # below properties are optional
-      type: set
-      storageType: "mdai-valkey"
 
   evaluations:
     # name required. must be unique across evaluations
@@ -50,7 +36,7 @@ spec:
       # type required. only one type supported for 0.6.0
       type: mdai/prometheus_alert
       # expr a valid PromQL query expression
-      expr: 'increase(bytes_received_by_service_total{logger!=""}[5m]) > 5*1024*1024'
+      expr: 'increase(bytes_received_by_service_total{mdai_service!=""}[5m]) > 5*1024*1024'
       # severity alert severity
       severity: warning
       # onStatus Prometheus alerts will indicate a status of `firing` or `resolved`. An action may be configured for one or both events, but one must be configured for at least one.
@@ -73,41 +59,24 @@ spec:
       # keep_firing_for once the alert is sent with a status of `firing`, it will persist for this long
       keep_firing_for: 10m
       # relevantLabels names of fields attached to the alert whose values will be provided to the configured actions
-      # for example, in this configured evaluation, the `expr` will be true on a per `logger` basis, so indicating `logger` in `relevantLabels` will ensure that when the `expr` is true for a given `logger` that value will be added to the `service_list` runtime value
+      # for example, in this configured evaluation, the `expr` will be true on a per `mdai_service` basis, so indicating `mdai_service` in `relevantLabels` will ensure that when the `expr` is true for a given `mdai_service` that value will be added to the `service_list` runtime value
       relevantLabels:
-        - "logger"
+        - "mdai_service"
     - name: top_listeners
       type: mdai/prometheus_alert
-      expr: 'increase(bytes_sent_by_service_total{logger!=""}[5m]) > 10*1024*1024'
+      expr: 'increase(bytes_sent_by_service_total{mdai_service!=""}[5m]) > 10*1024*1024'
       severity: warning
       for: 15m
       keep_firing_for: 10m
-    - name: top_team_talkers
-      type: mdai/prometheus_alert
-      expr: 'increase(bytes_received_by_team_region_total{team!=""}[1h]) > 10*1024*1024'
-      severity: warning
-      for: 3m
-      keep_firing_for: 10m
-      relevantLabels:
-        - "team"
-      onStatus:
-        firing:
-          variableUpdate:
-            variableRef: team_list
-            operation: mdai/add_element
-        resolved:
-          variableUpdate:
-            variableRef: team_list
-            operation: mdai/remove_element
 
   observers:
     # name required. must be unique across observers
-    - name: observer1
+    - name: observer-data-in
       # resourceRef correctly maps the observers to their observer resource
       resourceRef: observer-collector
       # labelResourceAttributes keys on the telemetry records being observed. These keys will be used in groupbyattrs processor to group the telemetry records before calculating metrics.
       labelResourceAttributes:
-        - logger
+        - mdai_service
       # countMetricName if populated, designates the name of the metric in prometheus that represents the count of indicated telemetry
       countMetricName: items_received_by_service_total
       # bytesMetricName if populated, designates the name of the metric in prometheus that represnets the calculated size in bytes of the indicated telemetry
@@ -118,24 +87,12 @@ spec:
         logs:
           log_record:
             - 'resource.attributes["observer_direction"] != "received"'
-    - name: observer2
+    - name: observer-data-out
       resourceRef: observer-collector
       labelResourceAttributes:
-        - logger
+        - mdai_service
       countMetricName: items_sent_by_service_total
       bytesMetricName: bytes_sent_by_service_total
-      filter:
-        error_mode: ignore
-        logs:
-          log_record:
-            - 'resource.attributes["observer_direction"] != "exported"'
-    - name: team-region-received
-      resourceRef: observer-collector
-      labelResourceAttributes:
-        - region
-        - team
-      countMetricName: items_sent_by_team_region_total
-      bytesMetricName: bytes_sent_by_team_region_total
       filter:
         error_mode: ignore
         logs:
@@ -144,7 +101,7 @@ spec:
 
   observerResources:
     - name: observer-collector
-      image: public.ecr.aws/decisiveai/watcher-collector:0.1.3
+      image: public.ecr.aws/decisiveai/watcher-collector:0.1.4
       replicas: 3
       resources:
         limits:

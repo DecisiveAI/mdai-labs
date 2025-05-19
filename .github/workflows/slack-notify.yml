@@ -1,0 +1,15 @@
+on: push
+name: MDAI PR REVIEW NEEDED
+jobs:
+  slackNotification:
+    name: PR Review Needed
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: PR Review Needed
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_USERNAME: mdai-pr-bot
+        SLACK_ICON: https://github.com/decisiveai.png?size=48
+        SLACK_COLOR: ${{ job.status }}
