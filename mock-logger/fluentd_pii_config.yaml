@@ -1,0 +1,254 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-v2
+data:
+  fluentd.conf: |-
+    <source>
+      @type dummy
+      tag dummy
+      rate 5
+      dummy [
+        {
+          "timestamp": "2025-05-14T12:00:01Z",
+          "level": "INFO",
+          "logger": "checkout-service",
+          "action": "payment-check",
+          "message": "Action payment-check processed successfully",
+          "user_id": 1001,
+          "name": "Alice Rivera",
+          "ssn": "000-11-0000",
+          "phone": "123-456-1111",
+          "email": "alice.rivera@example.com",
+          "cc": "4111-1111-1111-1111",
+          "billing_address": "123 Elm St, Austin, TX 12345",
+          "transaction_id": 90001,
+          "amount": 129.99,
+          "duration": 45,
+          "status": "success"
+        },
+        {
+          "timestamp": "2025-05-14T12:01:15Z",
+          "level": "ERROR",
+          "logger": "checkout-service",
+          "action": "fraud-check",
+          "message": "Action fraud-check failed due to suspected stolen card",
+          "user_id": 1002,
+          "name": "Brian Lee",
+          "ssn": "000-11-1111",
+          "phone": "123-456-2222",
+          "email": "brian.lee@example.net",
+          "cc": "5500-0000-0000-0004",
+          "billing_address": "44 Pine St, Denver, CO 12345",
+          "transaction_id": 90002,
+          "amount": 299.00,
+          "duration": 52,
+          "status": "failure"
+        },
+        {
+          "timestamp": "2025-05-14T12:02:40Z",
+          "level": "INFO",
+          "logger": "checkout-service",
+          "action": "inventory-check",
+          "message": "Action inventory-check processed successfully",
+          "user_id": 1003,
+          "name": "Catherine Nguyen",
+          "ssn": "000-11-2222",
+          "phone": "123-456-3333",
+          "email": "cat.nguyen@example.org",
+          "cc": "3400-0000-0000-009",
+          "billing_address": "88 Cherry Ln, Seattle, WA 12345",
+          "transaction_id": 90003,
+          "amount": 15.50,
+          "duration": 36,
+          "status": "success"
+        },
+        {
+          "timestamp": "2025-05-14T12:03:58Z",
+          "level": "WARN",
+          "logger": "checkout-service",
+          "action": "risk-check",
+          "message": "Action risk-check returned high-risk score",
+          "user_id": 1004,
+          "name": "David Chen",
+          "ssn": "000-11-3333",
+          "phone": "123-456-4444",
+          "email": "davidc@example.co",
+          "cc": "6011-0009-9013-9424",
+          "billing_address": "16 Bay Rd, Chicago, IL 12345",
+          "transaction_id": 90004,
+          "amount": 85.25,
+          "duration": 47,
+          "status": "warning"
+        },
+        {
+          "timestamp": "2025-05-14T12:04:22Z",
+          "level": "INFO",
+          "logger": "checkout-service",
+          "action": "payment-check",
+          "message": "Action payment-check processed successfully",
+          "user_id": 1005,
+          "name": "Ella Johnson",
+          "ssn": "000-11-4444",
+          "phone": "123-456-5555",
+          "email": "ella.j@example.com",
+          "cc": "4000-0000-0000-0002",
+          "billing_address": "207 Sunset Blvd, Los Angeles, CA 12345",
+          "transaction_id": 90005,
+          "amount": 49.99,
+          "duration": 30,
+          "status": "success"
+        },
+        {
+          "timestamp": "2025-05-14T12:05:36Z",
+          "level": "ERROR",
+          "logger": "checkout-service",
+          "action": "payment-check",
+          "message": "Action payment-check failed due to expired card",
+          "user_id": 1006,
+          "name": "Frank Miller",
+          "ssn": "000-11-5555",
+          "phone": "123-456-6666",
+          "email": "fmiller@example.io",
+          "cc": "3782-8224-6310-005",
+          "billing_address": "901 River Ave, Miami, FL 12345",
+          "transaction_id": 90006,
+          "amount": 105.75,
+          "duration": 40,
+          "status": "failure"
+        },
+        {
+          "timestamp": "2025-05-14T12:06:48Z",
+          "level": "INFO",
+          "logger": "checkout-service",
+          "action": "inventory-check",
+          "message": "Action inventory-check processed successfully",
+          "user_id": 1007,
+          "name": "Gina Park",
+          "ssn": "000-11-6666",
+          "phone": "123-456-7777",
+          "email": "gina.park@example.ai",
+          "cc": "6011-1234-5678-9012",
+          "billing_address": "320 Market St, San Francisco, CA 12345",
+          "transaction_id": 90007,
+          "amount": 22.99,
+          "duration": 28,
+          "status": "success"
+        },
+        {
+          "timestamp": "2025-05-14T12:07:59Z",
+          "level": "INFO",
+          "logger": "checkout-service",
+          "action": "risk-check",
+          "message": "Action risk-check processed successfully",
+          "user_id": 1008,
+          "name": "Henry Scott",
+          "ssn": "000-11-7777",
+          "phone": "123-456-8888",
+          "email": "henry@example.dev",
+          "cc": "4111-8765-4321-1234",
+          "billing_address": "752 West Ave, Brooklyn, NY 12345",
+          "transaction_id": 90008,
+          "amount": 64.80,
+          "duration": 39,
+          "status": "success"
+        },
+        {
+          "timestamp": "2025-05-14T12:09:02Z",
+          "level": "WARN",
+          "logger": "checkout-service",
+          "action": "fraud-check",
+          "message": "Action fraud-check returned borderline risk",
+          "user_id": 1009,
+          "name": "Isabel Torres",
+          "ssn": "000-11-8888",
+          "phone": "123-456-9999",
+          "email": "isa.torres@example.us",
+          "cc": "3566-1111-1111-1113",
+          "billing_address": "13 Beacon St, Boston, MA 12345",
+          "transaction_id": 90009,
+          "amount": 175.00,
+          "duration": 50,
+          "status": "warning"
+        },
+        {
+          "timestamp": "2025-05-14T12:10:10Z",
+          "level": "INFO",
+          "logger": "checkout-service",
+          "action": "payment-check",
+          "message": "Action payment-check processed successfully",
+          "user_id": 1010,
+          "name": "Jake Wilson",
+          "ssn": "000-11-9999",
+          "phone": "123-456-0000",
+          "email": "jake.wilson@example.biz",
+          "cc": "5432-1098-7654-3210",
+          "billing_address": "88 Cross Rd, Phoenix, AZ 12345",
+          "transaction_id": 90010,
+          "amount": 199.99,
+          "duration": 33,
+          "status": "success"
+        }
+      ]
+    </source>
+    <match dummy>
+      @type copy
+      <store>
+        @type stdout
+      </store>
+      <store>
+        @type forward
+        <server>
+          host gateway-collector.mdai.svc.cluster.local
+          port 8006
+        </server>
+        <buffer>
+          @type memory
+          chunk_limit_size 1m
+          flush_interval 15s
+          retry_max_times 3
+        </buffer>
+      </store>
+    </match>
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluentd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      securityContext:
+        runAsUser: 0
+        fsGroup: 0
+      containers:
+      - name: fluentd
+        image: fluent/fluentd:edge-debian
+        args: ["-c", "/fluentd/etc/fluentd.conf"]  # Ensure Fluentd uses the correct config file
+        volumeMounts:
+        - name: config-volume
+          mountPath: /fluentd/etc
+        - name: varlog
+          mountPath: /var/log
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 100m
+          requests:
+            memory: 100Mi
+            cpu: 50m
+      volumes:
+      - name: config-volume
+        configMap:
+          name: fluentd-v2
+      - name: varlog
+        hostPath:
+          path: /var/log

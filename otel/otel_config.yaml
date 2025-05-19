@@ -47,7 +47,7 @@ spec:
 
       groupbyattrs:
         keys:
-          - logger
+          - mdai_service
 
       resource/observer_receiver_tag:
         attributes:
@@ -72,7 +72,7 @@ spec:
         logs:
           log_record:
             # below is an example of how an environment variable configured in the mdai_v1_mdaihub_sample_config_0_6_0.yaml can be used in an opentelemetry collector config
-            - 'IsMatch(attributes["logger"], "${env:SERVICE_LIST_REGEX}")'
+            - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
 
       # ~~~ MANAGE STATE ~~~~~
       #
@@ -109,6 +109,16 @@ spec:
     exporters:
       debug/observer: { }
       debug/storage: { }
+
+      debug/filtered:
+        verbosity: detailed
+        sampling_initial: 2
+        sampling_thereafter: 100
+
+      debug/exported:
+        verbosity: detailed
+        sampling_initial: 2
+        sampling_thereafter: 100
 
       debug/detailed:
         verbosity: detailed
@@ -167,7 +177,7 @@ spec:
             filter/service_list,
             attributes/state_filtered
           ]
-          exporters: [ routing/external ]
+          exporters: [ debug/filtered, routing/external ]
 
         logs/route_to_external:
           receivers: [ routing/external ]
@@ -189,7 +199,7 @@ spec:
             # batch must be last in processor list
             batch
           ]
-          exporters: [ debug/observer, otlp/observer ]
+          exporters: [ otlp/observer ]
 
         logs/observer_exporters:
           receivers: [ routing/external ]
@@ -201,4 +211,4 @@ spec:
             # batch must be last in processor list
             batch,
           ]
-          exporters: [ debug/observer, otlp/observer ]
+          exporters: [ otlp/observer ]
