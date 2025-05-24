@@ -2,7 +2,7 @@ apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   labels:
-    mdaihub-name: mdaihub-sample
+    mdaihub-name: mdaihub-dynamic-filtration
   name: gateway
   namespace: mdai
 spec:
@@ -10,23 +10,11 @@ spec:
   envFrom:
     - configMapRef:
         # this is the config map which will store your variables that your collector will use
-        name: mdaihub-sample-variables
+        name: mdaihub-dynamic-filtration-variables
   config:
     receivers:
       fluentforward:
         endpoint: '${env:MY_POD_IP}:8006'
-      otlp:
-        protocols:
-          grpc:
-            endpoint: '${env:MY_POD_IP}:4317'
-          http:
-            endpoint: '${env:MY_POD_IP}:4318'
-            # Since this collector needs to receive data from the web, enable cors for all origins
-            # `allowed_origins` can be refined for your deployment domain
-            cors:
-              allowed_origins:
-                - "http://*"
-                - "https://*"
 
     extensions:
       # The health_check extension is mandatory for this chart.
@@ -65,7 +53,7 @@ spec:
         error_mode: ignore
         logs:
           log_record:
-            - 'attributes["level"] == "INFO"'
+            - 'attributes["mdai_level"] == "INFO"'
 
       filter/service_list:
         error_mode: ignore
@@ -107,26 +95,8 @@ spec:
             value: "EXPORTED"
 
     exporters:
-      debug/observer: { }
-      debug/storage: { }
-
-      debug/filtered:
-        verbosity: detailed
-        sampling_initial: 2
-        sampling_thereafter: 100
-
-      debug/exported:
-        verbosity: detailed
-        sampling_initial: 2
-        sampling_thereafter: 100
-
-      debug/detailed:
-        verbosity: detailed
-        sampling_initial: 2
-        sampling_thereafter: 100
-
       otlp/observer:
-        endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
+        endpoint: mdaihub-dynamic-filtration-observer-collector-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
 
@@ -161,14 +131,12 @@ spec:
       pipelines:
         logs/fluent:
           receivers: [ fluentforward ]
-          processors: [attributes/state_received]
+          processors: [ attributes/state_received ]
           exporters: [ routing/normalize ]
 
         logs/normalize:
           receivers: [ routing/normalize ]
-          processors: [
-            attributes/state_normalized
-          ]
+          processors: [ attributes/state_normalized ]
           exporters: [ routing/filter]
 
         logs/filter:

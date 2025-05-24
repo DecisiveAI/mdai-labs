@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: mdai-operator
     app.kubernetes.io/managed-by: kustomize
-  name: mdaihub-sample
+  name: mdaihub-dynamic-filtration
   namespace: mdai
 spec:
   variables:
@@ -22,11 +22,6 @@ spec:
             join:
             # delimiter insert this delimiter string between values as they're joined
               delimiter: "|"
-        - name: "SERVICE_LIST_CSV"
-          transformer:
-            join:
-              delimiter: ","
-      # below properties are optional
       type: set
       storageType: "mdai-valkey"
 

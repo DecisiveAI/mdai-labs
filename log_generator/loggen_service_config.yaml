@@ -11,12 +11,18 @@ data:
 
     # Generate mock logs
     def generate_mock_logs(num_logs=10):
+        # UPDATE LOG LEVELS TO REFLECT YOUR LOGS
         log_levels = ["INFO", "ERROR", "WARN", "DEBUG"]
+
+        # UPDATE THESE TO REPLICATE YOUR LOGS
         services = ["auth-service", "user-service", "payment-service", "order-service", "inventory-service"]
+
+        # UPATE THESE TO REFLECT ACTIONS/TRANSACTIONS THAT OCCUR IN YOUR LOGS
         actions = ["login", "payment", "order", "signup", "inventory-check", "logout"]
 
 
         for _ in range(num_logs):
+            # THIS CAN BE UPDATED TO REFLECT HOW YOUR LOGS APPEAR. THIS IS A STRUCTURED JSON LOG. IF YOUR LOGS HAVE A DIFFERENT FORMAT, FEEL FREE TO CHANGE THIS.
             log = {
                 "timestamp": (datetime.now() - timedelta(minutes=random.randint(0, 60))).isoformat(),
                 "level": random.choice(log_levels),
