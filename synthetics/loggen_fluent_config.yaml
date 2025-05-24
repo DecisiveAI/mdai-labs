@@ -11,7 +11,7 @@ fileConfigs:
         @type multi_format
         <pattern>
           format regexp
-          expression (?<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}) - (?<logger>service\d+) - (?<team>[a-zA-Z0-9]+) - (?<region>[a-zA-Z0-9-]+) - (?<level>INFO|ERROR|WARNING) - (?<message>.+)
+          expression (?<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}) - (?<mdai_service>service\d+) - (?<team>[a-zA-Z0-9]+) - (?<region>[a-zA-Z0-9-]+) - (?<level>INFO|ERROR|WARNING) - (?<message>.+)
           time_format %Y-%m-%dT%H:%M:%S%z
         </pattern>
         <pattern>
@@ -34,22 +34,28 @@ fileConfigs:
       </filter>
 
       <match kubernetes.**>
-        @type forward
-        <buffer>
-          @type file
-          path /var/log/fluentd/buffer
-          flush_at_shutdown true
-          flush_mode interval
-          flush_interval 5s
-          retry_forever true
-          retry_max_interval 30s
-          chunk_limit_size 8MB
-          queue_limit_length 256
-        </buffer>
-        <server>
-          host gateway-collector.mdai.svc.cluster.local
-          port 8006
-        </server>
+        @type copy
+        <store>
+          @type stdout
+        </store>
+        <store>
+          @type forward
+          <buffer>
+            @type file
+            path /var/log/fluentd/buffer
+            flush_at_shutdown true
+            flush_mode interval
+            flush_interval 5s
+            retry_forever true
+            retry_max_interval 30s
+            chunk_limit_size 8MB
+            queue_limit_length 256
+          </buffer>
+          <server>
+            host gateway-collector.mdai.svc.cluster.local
+            port 8006
+          </server>
+        </store>
       </match>
     </label>
 
