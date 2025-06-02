@@ -49,12 +49,6 @@ spec:
             value: "exported"
             action: upsert
 
-      filter/severity:
-        error_mode: ignore
-        logs:
-          log_record:
-            - 'attributes["mdai_level"] == "INFO"'
-
       filter/service_list:
         error_mode: ignore
         logs:
@@ -129,6 +123,15 @@ spec:
 
     service:
       telemetry:
+        resource:
+          mdai-logstream: collector
+        logs:
+          processors:
+            - batch:
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
         metrics:
           address: ":8888"
       extensions:

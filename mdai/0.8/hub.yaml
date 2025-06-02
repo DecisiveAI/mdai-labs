@@ -1,0 +1,100 @@
+
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-sample
+  namespace: mdai
+spec:
+  variables:
+    - key: service_list
+      dataType: set
+      serializeAs:
+        - name: "SERVICE_LIST"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+    - key: filter
+      dataType: string
+      serializeAs:
+        - name: "FILTER"
+    - key: default
+      dataType: string
+      serializeAs:
+        - name: "DEFAULT"
+    - key: severity_number
+      dataType: int
+      serializeAs:
+        - name: "SEVERITY_NUMBER"
+    - key: any_service_alerted
+      dataType: boolean
+      serializeAs:
+        - name: "SERVICE_ALERTED"
+    - key: attribute_map
+      dataType: map
+      serializeAs:
+        - name: "ATTRIBUTES"
+    - key: severity_filters_by_level
+      dataType: map
+      serializeAs:
+        - name: "SEVERITY_FILTERS_BY_LEVEL"
+    - key: my_priority_list
+      type: meta
+      dataType: metaPriorityList
+      variableRefs:
+        - default
+        - service_list
+      serializeAs:
+        - name: "SERVICE_PRIORITY"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+    - key: my_hash_set
+      type: meta
+      dataType: metaHashSet
+      variableRefs:
+        - severity_number
+        - severity_filters_by_level
+      serializeAs:
+        - name: "SERVICE_HASH_SET"
+  observers:
+    - name: service-bytes-watcher
+      resourceRef: watcher-collector
+      labelResourceAttributes:
+      - service.name
+      - team
+      - region
+      countMetricName: mdai_watcher_four_count_total
+      bytesMetricName: mdai_watcher_four_bytes_total
+      filter:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'attributes["log_level"] == "INFO"'
+
+  observerResources:
+    - name: watcher-collector
+      image: public.ecr.aws/decisiveai/observer-collector:0.1
+
+  prometheusAlert:
+    - name: logBytesOutTooHighBySvc
+      expr: 'increase(mdai_log_bytes_sent_total[1h]) > 100*1024*1024'
+      severity: warning
+      for: 5m
+      keep_firing_for: 10m
+
+  automations:
+    - eventRef: logBytesOutTooHighBySvc
+      workflow:
+        - handlerRef: HandleAddNoisyServiceToSet
+          args:
+            payload_val_ref: service_name
+            variable_ref: service_list
+        - handlerRef: publishMetrics
+        - handlerRef: notifySlack
+          args:
+            channel: infra-alerts
