@@ -41,7 +41,7 @@ spec:
 
   observerResources:
     - name: observer-collector
-      image: public.ecr.aws/decisiveai/watcher-collector:0.1.4
+      image: public.ecr.aws/decisiveai/observer-collector:0.1.4
       replicas: 3
       resources:
         limits:

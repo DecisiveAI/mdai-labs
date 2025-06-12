@@ -64,7 +64,7 @@ otel-config:
 
 run-synthetics:
 	@echo "🛠️ Applying otel config files: $(OTEL)"
-	kubectl apply -f
+	kubectl apply -f ./synthetics/
 
 
 fluentd:

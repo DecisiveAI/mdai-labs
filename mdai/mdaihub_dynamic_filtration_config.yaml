@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: mdai-operator
     app.kubernetes.io/managed-by: kustomize
-  name: mdaihub-dynamic-filtration
+  name: mdaihub-df
   namespace: mdai
 spec:
   variables:
@@ -16,7 +16,7 @@ spec:
       serializeAs:
       # name is a name provided for the environment variable version of the immediate parent variable. Must be unique among all environment variables.
         - name: "SERVICE_LIST_REGEX"
-        # transformer is a programmatic transformation applied to the runtime value of the variable before setting the value in the k8s configMap
+        # transformer is a programmatic transformation appli ed to the runtime value of the variable before setting the value in the k8s configMap
           transformer:
           # join the values of the variable into a single string
             join:
