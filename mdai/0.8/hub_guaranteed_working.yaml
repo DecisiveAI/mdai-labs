@@ -1,0 +1,118 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-sample
+spec:
+  variables:
+    - key: service_list
+      serializeAs:
+        - name: "SERVICE_LIST_REGEX"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+        - name: "SERVICE_LIST_CSV"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      # below properties are optional
+      dataType: set
+      storageType: "mdai-valkey"
+    - key: team_list
+      serializeAs:
+        - name: "TEAM_LIST_REGEX"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+        - name: "TEAM_LIST_CSV"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      # below properties are optional
+      dataType: set
+      storageType: "mdai-valkey"
+
+  prometheusAlert:
+    - name: top_talkers
+      expr: 'sum(increase(bytes_received_by_service_total{service_name!=""}[1m])) by (service_name, data_type) > 800*1024'
+      severity: warning
+      for: 1m
+      keep_firing_for: 1m
+    - name: top_listeners
+      expr: 'sum(increase(bytes_sent_by_service_total{service_name!=""}[1h])) by (service_name, data_type) > 10*1024*1024'
+      severity: warning
+      for: 15m
+      keep_firing_for: 10m
+    - name: top_team_talkers
+      expr: 'sum(increase(bytes_received_by_team_region_total{team!=""}[1h])) by (team, data_type) > 10*1024*1024'
+      severity: warning
+      for: 3m
+      keep_firing_for: 10m
+
+  automations:
+    - eventRef: top_talkers
+      workflow:
+        - handlerRef: HandleNoisyServiceAlert
+          args:
+            payload_val_ref: service_name
+            variable_ref: service_list
+    - eventRef: top_team_talkers
+      workflow:
+        - handlerRef: HandleNoisyServiceAlert
+          args:
+            payload_val_ref: team
+            variable_ref: team_list
+
+  observers:
+    - name: observer1
+      resourceRef: observer-collector
+      labelResourceAttributes:
+        - service.name
+      countMetricName: items_received_by_service_total
+      bytesMetricName: bytes_received_by_service_total
+      filter:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["observer_direction"] != "received"'
+    - name: observer2
+      resourceRef: observer-collector
+      labelResourceAttributes:
+        - service.name
+      countMetricName: items_sent_by_service_total
+      bytesMetricName: bytes_sent_by_service_total
+      filter:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["observer_direction"] != "exported"'
+    - name: team-region-received
+      resourceRef: observer-collector
+      labelResourceAttributes:
+        - region
+        - team
+      countMetricName: items_sent_by_team_region_total
+      bytesMetricName: bytes_sent_by_team_region_total
+      filter:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["observer_direction"] != "exported"'
+
+  observerResources:
+    - name: observer-collector
+      image: public.ecr.aws/decisiveai/observer-collector:0.1
+      ownLogsOtlpEndpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4318
+      resources:
+        limits:
+          memory: "512Mi"
+          cpu: "200m"
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
