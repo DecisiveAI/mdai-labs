@@ -42,7 +42,7 @@ kubectl create secret generic aws-credentials -n mdai --from-literal=AWS_ACCESS_
 **Install mdai collector (used for MDAI Self-Monitoring)**
 
 ```sh
-kubectl apply -f ./hub_v1_mdaicollector_mdaihub.yaml -n mdai
+kubectl apply -f  -n mdai ./mdai/hub_monitor/mdai_monitor.yaml
 ```
 
 **Install Log Generators**
@@ -66,7 +66,7 @@ kubectl apply -f ./synthetics/loggen_services.yaml
 **Create + Install MDAI Hub**
 
 ```sh
-kubectl apply -f ./mdai/0.8/hub_guaranteed_working.yaml -n mdai
+kubectl apply -f ./mdai/hub/0.8/hub_guaranteed_working.yaml -n mdai
 ```
 
 **Create + Install collector**
