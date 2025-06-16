@@ -7,9 +7,11 @@
             "Action": [
                 "s3:ListAccessPointsForObjectLambda",
                 "s3:GetAccessPoint",
+                "s3:GetObject",
                 "s3:PutAccountPublicAccessBlock",
                 "s3:ListAccessPoints",
                 "s3:CreateStorageLensGroup",
+                "s3:ListBucket",
                 "s3:ListJobs",
                 "s3:PutStorageLensConfiguration",
                 "s3:ListMultiRegionAccessPoints",
@@ -28,8 +30,8 @@
             "Effect": "Allow",
             "Action": "s3:*",
             "Resource": [
-                "arn:aws:s3:::mdai-audit-streams-0.8",
-                "arn:aws:s3:::mdai-audit-streams-0.8/*"
+                "arn:aws:s3:::your-bucket-name",
+                "arn:aws:s3:::your-bucket-name/*"
             ]
         }
     ]

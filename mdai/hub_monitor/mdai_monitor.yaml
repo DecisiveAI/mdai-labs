@@ -15,8 +15,8 @@ metadata:
   name: hub-monitor
 spec:
   aws:
-   awsAccessKeySecret: aws-credentials
+    awsAccessKeySecret: aws-credentials
   logs:
-   s3:
-     s3Region: "us-east-1"
-     s3Bucket: "mdai-audit-streams-0.8"
+    s3:
+      s3Region: "us-east-1"
+      s3Bucket: "your-bucket-name"

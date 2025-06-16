@@ -1,89 +1,105 @@
 # 0.8 TESTING
 
-## Steps
 
-**Create kind cluster**
+## Step 1. Create kind cluster
 
 ```sh
 kind create cluster -n mdai
 ```
-**Install `cert-manager`**
+
+## Step 2. Install `cert-manager`
 
 ```sh
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
 ```
 
+## Step 3. Install MDAI dependencies via Helm chart
 
-**With MDAI Self-Monitoring (powered on s3)**
+**Install Methods**
+
+Read about [self-monitoring](self_monitoring.md) with MDAI to understand the right choice for you. We highly recommend choosing self-monitoring.
+
+1. [MDAI with Self-Monitoring (powered on s3)](#mdai-with-self-monitoring-powered-on-s3)
+2. [MDAI without Self-Monitoring](#mdai-without-self-monitoring)
+
+
+### MDAI Collector with Self-Monitoring
+
+**Install MDAI Collector **
+
 ```sh
 helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --wait-for-jobs mdai mdai/mdai-hub --version v0.8.0-dev
 ```
 
-**Without MDAI Self-Monitoring (powered on s3)**
+> ❌ **Expected Error**
+>
+>You will now see an error with the service, `mdai-s3-logs-reader`, until you finish adding valid AWS IAM long-term credentials. Instructions to follow.
+
+**Setup Long-Term IAM User and MDAI Collector**
+
+Jump to [Setup IAM Long-term User](./aws/setup_iam_longterm_user_s3.md) for setting up a user and access keys for your cluster.
+
+*After running through the IAM and collector setup, skip ahead to [Step 4](#step-4-install-mdai-collector)*
+
+
+### MDAI Collector without Self-Monitoring
+
+> ⚠️ **Warning**
+>
+>Without this capability, you will not have access to our built-in, self-instrumentation that ensures visibility and accuracy of MDAI operations.
+
+**Install MDAI Collector**
 
 ```sh
 helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --wait-for-jobs mdai mdai/mdai-hub --set mdai-s3-logs-reader.enabled=false --version v0.8.0-dev
 ```
 
-### For s3 opt-in
+## Step 4: Install Log Generators
 
-Jump to [Setup IAM Long-term User](./aws/setup_iam_longterm_user.md) for setting up a user and access keys for your cluster.
-
-#### Install MDAI Hub Monitor (used for MDAI Self-Monitoring)**
-
-*Note: If You've chosen to hard code your secrets, use this deployment config*
-
-```sh
-kubectl apply -f ./mdai/hub_monitor/mdai_monitor_no_secrets.yaml
-```
-
-*Note: If You've chosen to programatically add secrets from an `.env` file, use this deployment config*
-```sh
-kubectl apply -f ./mdai/hub_monitor/mdai_monitor.yaml
-```
-
-**Install Log Generators**
-
-1. Super noisy logs
+### 1. Initiate super noisy logs
 ```sh
 kubectl apply -f ./synthetics/loggen_service_xtra_noisy.yaml
 ```
 
-1. Semi noisy logs
+### 2. Initiate semi-noisy logs
 ```sh
 kubectl apply -f ./synthetics/loggen_service_noisy.yaml
 ```
 
-1. Normal log flow
+### 3. Initiate normal log flow
 ```sh
 kubectl apply -f ./synthetics/loggen_services.yaml
 ```
 
-
-**Create + Install MDAI Hub**
+## Step 5: Create + Install MDAI Hub
 
 ```sh
 kubectl apply -f ./mdai/hub/0.8/hub_guaranteed_working.yaml -n mdai
 ```
 
-**Create + Install collector**
+## Step 6: Create + Install collector
 
 ```sh
 kubectl apply -f ./otel/0.8/otel_guaranteed_working.yaml -n mdai
 ```
 
-**Fwd logs from the loggen services to MDAI**
+## Step 7: Fwd logs from the loggen services to MDAI
 ```sh
 helm upgrade --install --repo https://fluent.github.io/helm-charts fluent fluentd -f ./synthetics/loggen_fluent_config.yaml
 ```
 
-**Fwd prometheus**
+## Step 8: Check alerts in Prometheus
+
+### Forward prometheus
 
 ```sh
 kubectl -n mdai port-forward svc/prometheus-operated 9090:9090
 ```
 *Note: can also be done using k9s*
 
-**See your alerts and dynamic filtration in action**
+
+### Check active alerts
+
+See your alerts and dynamic filtration in action
 
 > Visit http://localhost:9090/alerts
