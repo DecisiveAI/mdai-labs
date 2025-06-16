@@ -1,0 +1,110 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    mdaihub-name: mdaihub-sample
+  name: gateway
+  namespace: mdai
+spec:
+  managementState: managed
+  image: otel/opentelemetry-collector-contrib:0.118.0
+  replicas: 1
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+  envFrom:
+    - configMapRef:
+        name: mdaihub-sample-variables
+  config:
+    receivers:
+      fluentforward:
+        endpoint: '${env:MY_POD_IP}:8006'
+      otlp:
+        protocols:
+          grpc:
+            endpoint: '${env:MY_POD_IP}:4317'
+          http:
+            endpoint: '${env:MY_POD_IP}:4318'
+            # Since this collector needs to receive data from the web, enable cors for all origins
+            # `allowed_origins` can be refined for your deployment domain
+            cors:
+              allowed_origins:
+                - "http://*"
+                - "https://*"
+
+    extensions:
+      # The health_check extension is mandatory for this chart.
+      # Without the health_check extension the collector will fail the readiness and liveliness probes.
+      # The health_check extension can be modified, but should never be removed.
+      health_check:
+        endpoint: "${env:MY_POD_IP}:13133"
+
+    processors:
+      memory_limiter:
+        check_interval: 23s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+      batch:
+        send_batch_size: 1000
+        send_batch_max_size: 10000
+        timeout: 13s
+
+      groupbyattrs:
+        keys:
+          - mdai_service
+
+      resource/observer_receiver_tag:
+        attributes:
+          - key: observer_direction
+            value: "received"
+            action: upsert
+
+      resource/observer_exporter_tag:
+        attributes:
+          - key: observer_direction
+            value: "exported"
+            action: upsert
+
+      filter/service_list:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
+
+    exporters:
+      debug: { }
+      otlp/observer:
+        endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+    service:
+      telemetry:
+        resource:
+          mdai-logstream: collector
+        logs:
+          processors:
+            - batch:
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
+        metrics:
+          address: ":8888"
+      extensions:
+        - health_check
+      pipelines:
+        logs/customer_pipeline:
+          receivers: [ otlp, fluentforward ]
+          processors: [ filter/service_list, memory_limiter, batch, groupbyattrs, resource/observer_exporter_tag ]
+          exporters: [ debug, otlp/observer ]
+
+        logs/watch_receivers:
+          receivers: [ otlp, fluentforward ]
+          processors: [ memory_limiter, batch, groupbyattrs, resource/observer_receiver_tag ]
+          exporters: [ debug, otlp/observer ]

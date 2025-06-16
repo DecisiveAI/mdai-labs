@@ -27,22 +27,19 @@ helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --w
 
 ### For s3 opt-in
 
-**Get yo' secrets**
+Jump to [Setup IAM Long-term User](./aws/setup_iam_longterm_user.md) for setting up a user and access keys for your cluster.
+
+#### Install MDAI Hub Monitor (used for MDAI Self-Monitoring)**
+
+*Note: If You've chosen to hard code your secrets, use this deployment config*
 
 ```sh
-export MDAI_COLLECTOR_AWS_ACCESS_KEY_ID=<pastekeyhere>
-export MDAI_COLLECTOR_AWS_SECRET_ACCESS_KEY=<pastekeyhere>
+kubectl apply -f ./mdai/hub_monitor/mdai_monitor_no_secrets.yaml
 ```
 
-**Apply yo' secrets**
+*Note: If You've chosen to programatically add secrets from an `.env` file, use this deployment config*
 ```sh
-kubectl create secret generic aws-credentials -n mdai --from-literal=AWS_ACCESS_KEY_ID=$MDAI_COLLECTOR_AWS_ACCESS_KEY_ID --from-literal=AWS_SECRET_ACCESS_KEY=$MDAI_COLLECTOR_AWS_SECRET_ACCESS_KEY
-```
-
-**Install mdai collector (used for MDAI Self-Monitoring)**
-
-```sh
-kubectl apply -f  -n mdai ./mdai/hub_monitor/mdai_monitor.yaml
+kubectl apply -f ./mdai/hub_monitor/mdai_monitor.yaml
 ```
 
 **Install Log Generators**
@@ -52,12 +49,12 @@ kubectl apply -f  -n mdai ./mdai/hub_monitor/mdai_monitor.yaml
 kubectl apply -f ./synthetics/loggen_service_xtra_noisy.yaml
 ```
 
-2. Semi noisy logs
+1. Semi noisy logs
 ```sh
 kubectl apply -f ./synthetics/loggen_service_noisy.yaml
 ```
 
-3. Normal log flow
+1. Normal log flow
 ```sh
 kubectl apply -f ./synthetics/loggen_services.yaml
 ```
@@ -72,7 +69,7 @@ kubectl apply -f ./mdai/hub/0.8/hub_guaranteed_working.yaml -n mdai
 **Create + Install collector**
 
 ```sh
-kubectl apply -f ./otel/0.8/otel_df_config.yaml -n mdai
+kubectl apply -f ./otel/0.8/otel_guaranteed_working.yaml -n mdai
 ```
 
 **Fwd logs from the loggen services to MDAI**
