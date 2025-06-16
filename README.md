@@ -2,7 +2,9 @@
 
 A repository full of reference solutions for getting started with MDAI.
 
-## [Instructions](instructions.md)
+## [Manual Installation](install.md)
 
-Setting up and using MDAI
+## Automated Installation
+
+Simply run, `./setup_mdai.sh`
 

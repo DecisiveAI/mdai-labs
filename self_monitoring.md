@@ -23,14 +23,14 @@ There are currently two compatible destinations the `mdai-collector` supports
 
 Send MDAI Smart Telemetry hub component logs to an s3 bucket.
 
-[Jump ahead to instructions](instructions.md#mdai-collector-with-self-monitoring)
+[Jump ahead to instructions](./self_monitoring.md)
 
 
 ### MDAI Collector -> OTLP endpoint
 
 Send MDAI Smart Telemetry hub component logs to a custom OTLP HTTP destination.
 
-You can update the `values.yaml` for the [operator](https://github.com/DecisiveAI/mdai-helm-chart/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L52) and [mdai-gateway](https://github.com/DecisiveAI/mdai-helm-chart/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L59) to send logs to a destination of your choosing that accepts OTLP HTTP logs.
+[Jump ahead to instructions](./installMethods.md#mdai-with-self-monitoring-via-otlp-endpoint)
 
 
 ## Opt-out of Self-Monitoring
@@ -39,13 +39,6 @@ You can also choose to opt-out of self-monitoring by disabling OTel logging for 
 
 If you do not want to send logs from these components, you can disable sending logs by updating the `values.yaml` by setting `mdai-operator.manager.env.otelSdkDisabled` and `mdai-gateway.otelSdkDisabled` to `"true"` (a string value, not boolean).
 
-> ℹ️ To stop logs from sending to s3, you will need to delete the MdaiCollector Custom Resource
 
-----
-
-<br />
-<br />
-
-
-[Jump ahead to instructions](instructions.md#mdai-collector-with-self-monitoring)
+[Jump ahead to instructions](./installMethods.md#mdai-with-self-monitoring-via-otlp-endpoint)
 
