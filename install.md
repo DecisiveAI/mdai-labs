@@ -37,6 +37,10 @@ Send MDAI Smart Telemetry hub component logs to an s3 bucket for explainability 
 
 #### Install MDAI dependencies via Helm
 
+>[!Note]
+>If you came from the automated install, you don't need to run the next command. Continue on to the next step. If you end up running it more than once, it will just create a new deployment revision.
+
+
 ```sh
 helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --wait-for-jobs mdai mdai/mdai-hub --version v0.8.0-dev
 ```
