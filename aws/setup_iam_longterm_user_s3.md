@@ -11,7 +11,7 @@
 1. The `mdai-collector` references the secret to enable the e2e connectivity for MDAI to access the specified s3 bucket.
 
 
->[!Info]
+>[!NOTE]
 >
 >This guide assumes you have
 >1. Cloned our [`mdai-labs` repo](https://github.com/DecisiveAI/mdai-labs/tree/main) set this as your working directory

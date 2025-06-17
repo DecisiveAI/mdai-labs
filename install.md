@@ -5,15 +5,16 @@ Make sure Docker is running.
 ## Step 1. Create kind cluster
 
  Use kind to create a new cluster.
-    ```
-    kind create cluster --name mdai
-    ```
+
+```
+kind create cluster --name mdai
+```
 
 ## Step 2. Install cert-manager
 
-    ```
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
-    ```
+```
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
 
 ## Step 3. Install MDAI dependencies via Helm chart
 
