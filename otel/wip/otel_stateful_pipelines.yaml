@@ -1,0 +1,311 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    mdaihub-name: mdaihub-sample
+  name: gateway-3
+  namespace: mdai
+spec:
+  image: otel/opentelemetry-collector-contrib:0.117.0
+
+  envFrom:
+    - configMapRef:
+        name: mdaihub-sample-variables
+
+  config:
+    receivers:
+      fluentforward:
+        endpoint: "${env:MY_POD_IP}:8006"
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "${env:MY_POD_IP}:4317"
+          http:
+            endpoint: "${env:MY_POD_IP}:4318"
+            # Since this collector needs to receive data from the web, enable cors for all origins
+            # `allowed_origins` can be refined for your deployment domain
+            cors:
+              allowed_origins:
+                - "http://*"
+                - "https://*"
+
+    extensions:
+      # The health_check extension is mandatory for this chart.
+      # Without the health_check extension the collector will fail the readiness and liveliness probes.
+      # The health_check extension can be modified, but should never be removed.
+      health_check:
+        endpoint: "${env:MY_POD_IP}:13133"
+
+    processors:
+      memory_limiter:
+        check_interval: 23s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+      batch:
+        send_batch_size: 300
+        send_batch_max_size: 500
+        timeout: 13s
+
+      batch/compliance:
+        send_batch_size: 50000
+        send_batch_max_size: 55000
+        timeout: 30s
+
+      groupbyattrs:
+        keys:
+          - mdai_application
+
+      resource/watcher_receiver_tag:
+        attributes:
+          - key: watcher_direction
+            value: "received"
+            action: insert
+
+      resource/watcher_exporter_tag:
+        attributes:
+          - key: watcher_direction
+            value: "exported"
+            action: upsert
+
+      # ~~~ NORMALIZATION ~~~~~
+
+      # The following attribute blocks add log transform state to logs
+      #   1. NORMALIZED
+      #   1. FILTERED
+
+      transform/extract_body_stringified_json:
+        error_mode: propagate
+        log_statements:
+          - context: "log"
+            statements:
+              # adding level for later filtering
+              # cannot omit this line
+              - set(attributes["mdai_level"], ParseJSON(body)["level"]) where IsString(body) and IsMatch(body, "^\\{")
+              - set(attributes["mdai_application"], attributes["application"]) where IsString(body) and IsMatch(body, "^\\{")
+
+      transform/extract_body_plaintext:
+        error_mode: propagate
+        log_statements:
+          - context: "log"
+            statements:
+              # this line handles log with a body that is of non-JSON format and has no log level, then adds a log `level` attribute that is `INFO`
+              - set(attributes["mdai_level"], "INFO") where IsString(body) and IsMatch(body, "^[^{}]*$") and attributes["level"] == nil
+              - set(attributes["mdai_application"], attributes["application"]) where IsString(body) and IsMatch(body, "^[^{}]*$")
+
+      # ~~~ FILTERS ~~~~~
+      #
+      # The following attribute blocks manage filtering data for log streams
+
+      filter/severity:
+        error_mode: propagate
+        logs:
+          log_record:
+            - 'IsMatch(attributes["mdai_level"], "^(?i)(error)$")'
+
+      filter/static_application_level:
+        error_mode: propagate
+        logs:
+          log_record:
+            #- 'IsMatch(attributes["mdai_application"], "^(?i)(dev-boots-graphql-ri)$")'
+            - 'attributes["mdai_application"] == "dev-boots-graphql-ri" and IsMatch(attributes["mdai_level"], "^(?i)(info)$")'
+
+      filter/dynamic_application_level:
+        error_mode: propagate
+        logs:
+          log_record:
+            - 'IsMatch(attributes["mdai_application"], "${env:SERVICE_LIST_REGEX}")'
+
+      filter/service_list:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'IsMatch(attributes["mdai_application"], "${env:SERVICE_LIST_REGEX}")'
+
+      # ~~~ MANAGE STATE ~~~~~
+      #
+      # The following attribute blocks add log transform state to logs
+      #   1. RECEIVED
+      #   2. NORMALIZED
+      #   3. FILTERED
+      #   3. EXPORTED
+
+      attributes/state_received:
+        actions:
+          - key: "mdai_transform_state"
+            action: insert
+            value: "RECEIVED"
+
+      attributes/state_normalized:
+        actions:
+          - key: "mdai_transform_state"
+            action: upsert
+            value: "NORMALIZED"
+
+      attributes/state_filtered:
+        actions:
+          - key: "mdai_transform_state"
+            action: upsert
+            value: "FILTERED"
+
+      attributes/state_exported:
+        actions:
+          - key: "mdai_transform_state"
+            action: upsert
+            value: "EXPORTED"
+
+    exporters:
+      debug: {}
+
+      debug/detailed:
+        verbosity: detailed
+        sampling_initial: 2
+        sampling_thereafter: 100
+
+      otlp/watcher:
+        endpoint: mdaihub-sample-watcher-collector-service.mdai.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+      otlphttp/newrelic:
+        endpoint: "https://otlp.nr-data.net"
+        headers:
+          api-key: ${env:NEWRELIC_LICENSE_KEY}
+        write_buffer_size: 1048576 # 1MB
+
+      # awss3:
+      #   marshaler: otlp_json
+      #   s3uploader:
+      #     region: us-west-2
+      #     s3_bucket: chegg-nonprd-int-pvt-logs-newrelic-mdai
+      #     s3_prefix: compliance-logs
+      #     file_prefix: compliance-log_
+      #     compression: gzip
+
+    connectors:
+      routing/normalize:
+        match_once: true
+        table:
+          - context: log
+            condition: attributes["mdai_transform_state"] == "RECEIVED"
+            pipelines: [logs/normalize]
+
+      routing/filter:
+        match_once: true
+        table:
+          - context: log
+            condition: attributes["mdai_transform_state"] == "NORMALIZED"
+            pipelines: [logs/filter, logs/watcher_receivers ]
+
+      routing/external:
+        match_once: true
+        table:
+          - context: log
+            condition: attributes["mdai_transform_state"] == "FILTERED"
+            pipelines: [logs/route_to_nr, logs/watcher_exporters]
+
+    service:
+      telemetry:
+        metrics:
+          address: ":8888"
+      extensions:
+        - health_check
+      pipelines:
+        logs/fluent:
+          receivers: [ fluentforward ]
+          processors: [attributes/state_received]
+          exporters: [ routing/normalize ]
+
+        logs/normalize:
+          receivers: [ routing/normalize ]
+          processors: [
+            transform/extract_body_stringified_json,
+            transform/extract_body_plaintext,
+            attributes/state_normalized
+          ]
+          exporters: [ routing/filter]
+
+        logs/filter:
+          receivers: [ routing/filter ]
+          processors: [
+            # filter/severity,
+            # filter/service_list,
+            # filter/static_application_level,
+            filter/dynamic_application_level,
+            attributes/state_filtered
+          ]
+          exporters: [ routing/external ]
+
+        logs/route_to_nr:
+          receivers: [ routing/external ]
+          processors: [
+            attributes/state_exported
+          ]
+          exporters: [ otlphttp/newrelic ]
+
+        # logs/compliance:
+        #   receivers: [ otlp, fluentforward ]
+        #   processors: [ memory_limiter, batch/compliance ] # TODO: add back filter/severity
+        #   exporters: [ awss3 ]
+
+        # the following pipelines are for observers
+        logs/watcher_receivers:
+          # DO NOT change this connector without caution.
+          # We add mdai_application in the logs/normalize pipeline.
+          # This field is required for watching.
+          # Pipeline logs/watcher_receivers must be after normalization pipeline and before filtering occurs
+          receivers: [ routing/filter ]
+          processors: [
+            resource/watcher_receiver_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ otlp/watcher ]
+
+        logs/watcher_exporters:
+          receivers: [ routing/external ]
+          processors: [
+            resource/watcher_receiver_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch,
+          ]
+          exporters: [ otlp/watcher ]
+
+  ingress:
+    annotations:
+      alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-west-2:858610460269:certificate/7fff4e10-9c0a-4bcf-8bdf-19fa0669a815"
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/load-balancer-name: mdai-grpc-endpoint
+      alb.ingress.kubernetes.io/backend-protocol-version: GRPC
+      alb.ingress.kubernetes.io/scheme: internal
+      alb.ingress.kubernetes.io/target-type: ip
+      kubernetes.io/ingress.class: alb
+    grpcService:
+      type: NodePort
+    nonGrpcService:
+      type: LoadBalancer
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: mdai-gw.test.shared.chegg.services
+        service.beta.kubernetes.io/aws-load-balancer-name: mdai-non-grpc-endpoint
+        service.beta.kubernetes.io/aws-load-balancer-type: external
+        service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+        service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
+        service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-west-2:858610460269:certificate/7fff4e10-9c0a-4bcf-8bdf-19fa0669a815"
+    type: aws
+    collectorEndpoints:
+      otlp: otlp.mdai.io
+
+  resources:
+    limits:
+      cpu: "1"
+      memory: 20248M
+    requests:
+      cpu: "1"
+      memory: 20248M

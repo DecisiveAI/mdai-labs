@@ -6,16 +6,7 @@ metadata:
   name: gateway
   namespace: mdai
 spec:
-  managementState: managed
   image: otel/opentelemetry-collector-contrib:0.117.0
-  replicas: 1
-  resources:
-    limits:
-      memory: "256Mi"
-      cpu: "200m"
-    requests:
-      memory: "128Mi"
-      cpu: "100m"
   envFrom:
     - configMapRef:
         # this is the config map which will store your variables that your collector will use
@@ -45,7 +36,6 @@ spec:
       groupbyattrs:
         keys:
           - mdai_service
-          - mdai_level
 
       resource/observer_receiver_tag:
         attributes:
@@ -59,12 +49,14 @@ spec:
             value: "exported"
             action: upsert
 
-      filter/service_list:
-        error_mode: ignore
-        logs:
-          log_record:
-            # below is an example of how an environment variable configured in the mdai_v1_mdaihub_sample_config_0_6_0.yaml can be used in an opentelemetry collector config
-            - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
+      # TODO: Quickstart: Uncomment the following filter
+
+      # filter/service_list:
+      #   error_mode: ignore
+      #   logs:
+      #     log_record:
+      #       # below is an example of how an environment variable configured in the mdai_v1_mdaihub_sample_config_0_6_0.yaml can be used in an opentelemetry collector config
+      #       - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
 
       # ~~~ MANAGE STATE ~~~~~
       #
@@ -99,18 +91,13 @@ spec:
             value: "EXPORTED"
 
     exporters:
-      debug/rec:
-        verbosity: detailed
-        sampling_initial: 2
-        sampling_thereafter: 100
-
       debug/detailed:
         verbosity: detailed
         sampling_initial: 2
         sampling_thereafter: 100
 
       otlp/observer:
-        endpoint: hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4317
+        endpoint: mdaihub-df-observer-collector-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
 
@@ -155,7 +142,7 @@ spec:
         logs/fluent:
           receivers: [ fluentforward ]
           processors: [ attributes/state_received ]
-          exporters: [ debug/rec, routing/normalize ]
+          exporters: [ routing/normalize ]
 
         logs/normalize:
           receivers: [ routing/normalize ]
@@ -165,7 +152,9 @@ spec:
         logs/filter:
           receivers: [ routing/filter ]
           processors: [
-            filter/service_list,
+            # TODO: Quickstart: Uncomment the following filter
+
+            # filter/service_list,
             attributes/state_filtered
           ]
           exporters: [ routing/external ]

@@ -8,7 +8,7 @@ metadata:
 spec:
   managementState: managed
   image: otel/opentelemetry-collector-contrib:0.118.0
-  replicas: 1
+  replicas: 5
   resources:
     limits:
       memory: "256Mi"
@@ -68,10 +68,8 @@ spec:
         attributes:
           - key: observer_direction
             value: "exported"
-            action: upsert
 
       filter/service_list:
-        error_mode: ignore
         logs:
           log_record:
             - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'

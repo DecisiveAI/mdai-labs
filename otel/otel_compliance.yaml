@@ -57,7 +57,7 @@ spec:
 
     exporters:
       otlp/observer:
-        endpoint: mdaihub-dynamic-filtration-observer-collector-service.mdai.svc.cluster.local:4317
+        endpoint: mdaihub-df-observer-collector-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
 
