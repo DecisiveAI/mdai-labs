@@ -6,7 +6,16 @@ metadata:
   name: gateway
   namespace: mdai
 spec:
-  image: otel/opentelemetry-collector-contrib:0.117.0
+  managementState: managed
+  image: otel/opentelemetry-collector-contrib:0.118.0
+  replicas: 5
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
   envFrom:
     - configMapRef:
         # this is the config map which will store your variables that your collector will use
@@ -35,7 +44,7 @@ spec:
 
       groupbyattrs:
         keys:
-          - mdai_service
+          - level
 
       resource/observer_receiver_tag:
         attributes:
@@ -53,11 +62,13 @@ spec:
         error_mode: ignore
         logs:
           log_record:
-            - 'IsMatch(attributes["level"], "INFO|DEBUG")'
+            - 'IsMatch(attributes["level"], "${env:LEVEL_REGEX}")'
 
     exporters:
+      debug: { }
+
       otlp/observer:
-        endpoint: mdaihub-df-observer-collector-service.mdai.svc.cluster.local:4317
+        endpoint: mdaihub-compliance-observer-collector-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
 
@@ -72,6 +83,15 @@ spec:
 
     service:
       telemetry:
+        resource:
+          mdai-logstream: collector
+        logs:
+          processors:
+            - batch:
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
         metrics:
           address: ":8888"
       extensions:
@@ -79,30 +99,22 @@ spec:
       pipelines:
         logs/fluent:
           receivers: [ fluentforward ]
-          processors: [ filter/non-essential-logs ]
-          exporters: [ s3/compliance ]
-
-        # the following pipelines are for observers
-        logs/observer_receivers:
-          # DO NOT change this connector without caution.
-          # We add mdai_application in the logs/normalize pipeline.
-          # This field is required for watching.
-          # Pipeline logs/observer_receivers must be after normalization pipeline and before filtering occurs
-          receivers: [ routing/filter ]
           processors: [
-            resource/observer_receiver_tag,
+            filter/non-essential-logs,
+            # DO NOT CHANGE ORDER OF THE FOLLOWING PROCESSORS
+            resource/observer_exporter_tag,
             groupbyattrs,
             memory_limiter,
             # DO NOT CHANGE ORDER
             # batch must be last in processor list
-            batch
+            batch,
           ]
-          exporters: [ otlp/observer ]
+          exporters: [ debug, s3/compliance ]
 
         logs/observer_exporters:
-          receivers: [ routing/external ]
+          receivers: [ fluentforward ]
           processors: [
-            resource/observer_exporter_tag,
+            resource/observer_receiver_tag,
             groupbyattrs,
             memory_limiter,
             # DO NOT CHANGE ORDER

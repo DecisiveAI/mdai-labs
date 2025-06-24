@@ -5,7 +5,7 @@ KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-mdai}"
 NAMESPACE="${NAMESPACE:-mdai}"
 HELM_REPO_URL="https://charts.mydecisive.ai"
 HELM_CHART_NAME="mdai-hub"
-HELM_CHART_VERSION="${HELM_CHART_VERSION:-v0.7.1-rc2}"
+HELM_CHART_VERSION="${HELM_CHART_VERSION:-v0.8.0-dev}"
 CERT_MANAGER_URL="https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
 
 ensure_command() {
@@ -54,6 +54,18 @@ create_cluster() {
   echo "✅ MDAI cluster installed!"
 }
 
+upgrade_mdai() {
+  echo "🐙 Upgrade MDAI '${HELM_CHART_NAME}'..."
+  helm upgrade --install mdai "${HELM_CHART_NAME}" \
+    --repo "${HELM_REPO_URL}" \
+    --namespace "${NAMESPACE}" \
+    --create-namespace \
+    --version "${HELM_CHART_VERSION}" \
+    --cleanup-on-fail
+
+  echo "✅ MDAI cluster upgraded!"
+}
+
 deploy_log_generators() {
   echo "🧪 Deploying synthetic log generators..."
   ensure_command kubectl
@@ -71,7 +83,7 @@ deploy_log_generators() {
 
 install_hub() {
   echo "🧠 Installing MDAI Smart Telemetry Hub..."
-  kubectl apply -f ./mdai/hub/0.8/hub_ref.yaml -n "${NAMESPACE}"
+  kubectl apply -f ./mdai/hub/hub_ref.yaml -n "${NAMESPACE}"
   echo "✅ MDAI Hub deployed"
 }
 
@@ -100,7 +112,7 @@ aws_secret_from_env() {
 
 apply_collector_with_keys() {
   echo "🔐 Deploying MDAI Collector with updated keys..."
-  kubectl apply -f ./mdai/hub_monitor/mdai_monitor.yaml -n "${NAMESPACE}"
+  kubectl apply -f ./mdai/hub_monitor/mdai_monitor_no_secrets.yaml -n "${NAMESPACE}"
   echo "✅ MDAI Collector with updated keys deployed"
 }
 
@@ -125,6 +137,7 @@ pii() {
   echo "✅ PII configurations deployed"
 }
 
+# note this only works for the default install
 clean_configs() {
   echo "🔥 Deleting all resources in namespace '${NAMESPACE}'..."
   ensure_command kubectl
@@ -156,19 +169,20 @@ delete_cluster() {
 main() {
   case "${1:-}" in
     install)   create_cluster ;;
+    upgrade)   upgrade_mdai;;
+    clean)     clean_configs ;;
     delete)    delete_cluster ;;
     logs)      deploy_log_generators ;;
     hub)       install_hub ;;
     collector) install_collector ;;
     fluentd)   forward_logs ;;
-    clean)     clean_configs ;;
     aws_secret) aws_secret_from_env ;;
     mdai_monitor) apply_collector_with_keys ;;
     compliance) compliance ;;
     df) dynamic_filtration ;;
     pii) pii ;;
     *)
-      echo "Usage: $0 {install|delete|logs|hub|collector|fluentd|clean|aws_secret|mdai_monitor|compliance|df|pii}"
+      echo "Usage: $0 {install|upgrade|clean|delete|logs|hub|collector|fluentd|aws_secret|mdai_monitor|compliance|df|pii}"
       exit 1
       ;;
   esac

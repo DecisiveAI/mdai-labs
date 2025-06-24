@@ -8,29 +8,33 @@ metadata:
   namespace: mdai
 spec:
   variables:
-  evaluations:
+    - key: level_list
+      serializeAs:
+        - name: "LEVEL_REGEX"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+      # below properties are optional
+      dataType: set
+      storageType: "mdai-valkey"
+
   observers:
-    # name required. must be unique across observers
-    - name: observer-data-in
-      # resourceRef correctly maps the observers to their observer resource
+    - name: observer-in
       resourceRef: observer-collector
-      # labelResourceAttributes keys on the telemetry records being observed. These keys will be used in groupbyattrs processor to group the telemetry records before calculating metrics.
       labelResourceAttributes:
-        - mdai_service
-      # countMetricName if populated, designates the name of the metric in prometheus that represents the count of indicated telemetry
+        - level
       countMetricName: items_received_by_service_total
-      # bytesMetricName if populated, designates the name of the metric in prometheus that represnets the calculated size in bytes of the indicated telemetry
       bytesMetricName: bytes_received_by_service_total
-      # filter Optional. config for an opentelemetry filter processor
       filter:
         error_mode: ignore
         logs:
           log_record:
             - 'resource.attributes["observer_direction"] != "received"'
-    - name: observer-data-out
+    - name: observer-out
       resourceRef: observer-collector
       labelResourceAttributes:
-        - mdai_service
+        - level
       countMetricName: items_sent_by_service_total
       bytesMetricName: bytes_sent_by_service_total
       filter:
@@ -41,8 +45,8 @@ spec:
 
   observerResources:
     - name: observer-collector
-      image: public.ecr.aws/decisiveai/observer-collector:0.1.4
-      replicas: 3
+      image: public.ecr.aws/decisiveai/observer-collector:0.1
+      ownLogsOtlpEndpoint: mdaihub-compliance-observer-collector-service.mdai.svc.cluster.local:4318
       resources:
         limits:
           memory: "512Mi"
