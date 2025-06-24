@@ -77,7 +77,8 @@ spec:
             - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
 
     exporters:
-      debug: { }
+      debug/received: { }
+      debug/exported: { }
       otlp/observer:
         endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
         tls:
@@ -102,9 +103,9 @@ spec:
         logs/customer_pipeline:
           receivers: [ otlp, fluentforward ]
           processors: [ filter/service_list, memory_limiter, batch, groupbyattrs, resource/observer_exporter_tag ]
-          exporters: [ debug, otlp/observer ]
+          exporters: [ debug/received, otlp/observer ]
 
         logs/watch_receivers:
           receivers: [ otlp, fluentforward ]
           processors: [ memory_limiter, batch, groupbyattrs, resource/observer_receiver_tag ]
-          exporters: [ debug, otlp/observer ]
+          exporters: [ debug/exported, otlp/observer ]
