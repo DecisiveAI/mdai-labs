@@ -103,9 +103,9 @@ spec:
         logs/customer_pipeline:
           receivers: [ otlp, fluentforward ]
           processors: [ filter/service_list, memory_limiter, batch, groupbyattrs, resource/observer_exporter_tag ]
-          exporters: [ debug/received, otlp/observer ]
+          exporters: [ debug/exported, otlp/observer ]
 
         logs/watch_receivers:
           receivers: [ otlp, fluentforward ]
           processors: [ memory_limiter, batch, groupbyattrs, resource/observer_receiver_tag ]
-          exporters: [ debug/exported, otlp/observer ]
+          exporters: [ debug/received, otlp/observer ]
