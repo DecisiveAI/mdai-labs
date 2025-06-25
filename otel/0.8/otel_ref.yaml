@@ -68,6 +68,7 @@ spec:
         attributes:
           - key: observer_direction
             value: "exported"
+            action: upsert            
 
       filter/service_list:
         logs:
