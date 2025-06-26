@@ -99,7 +99,7 @@ Jump ahead to [Install MDAI Hub](../install.md#install-mdai-dependencies-via-hel
 
 #### Option 2: Manually
 
-Manually update the MDAI Collector CR with Access keys (not recommended)
+Manually update the MDAI Hub Custom Resource with Access keys (not recommended)
 
 From Step 1, you should have saved your credentials. You can update the file `mdai/hub_monitor/mdai_monitor.yaml` with your access keys.
 
