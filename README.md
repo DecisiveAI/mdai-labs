@@ -44,9 +44,9 @@ chmod +x mdai-kind.sh
 
 | Action                             | Command                               | Description                                                   |
 |------------------------------------|---------------------------------------|---------------------------------------------------------------|
-| Install Compliance configs         | `./mdai-kind.sh compliance`   |        |
-| Install Dynamic Filtration configs | `./mdai-kind.sh df`   |        |
-| Install PII Redaction configs      | `./mdai-kind.sh pii`   |        |
+| Install Compliance configs         | `./mdai-kind.sh compliance`           | Applies the MDAI Compliance manifest                          |
+| Install Dynamic Filtration configs | `./mdai-kind.sh df`                   | Applies the MDAI Dynamic Filtering manifest                   |
+| Install PII Redaction configs      | `./mdai-kind.sh pii`                  | Applies the MDAI PII manifests                                |
 
 ### 📈 Data generators
 
