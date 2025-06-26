@@ -89,7 +89,7 @@ install_hub() {
 
 install_collector() {
   echo "📥 Installing OpenTelemetry Collector..."
-  kubectl apply -f ./otel/0.8/otel_ref.yaml -n "${NAMESPACE}"
+  kubectl apply -f ./otel/otel_ref.yaml -n "${NAMESPACE}"
   echo "✅ OTel Collector deployed"
 }
 
