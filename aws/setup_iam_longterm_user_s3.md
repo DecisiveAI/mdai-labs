@@ -15,7 +15,7 @@
 >
 >This guide assumes you have
 >1. Cloned our [`mdai-labs` repo](https://github.com/DecisiveAI/mdai-labs/tree/main) set this as your working directory
->2. Have access to an AWS account with Admin Admin access
+>2. Have access to an AWS account with Admin access
 
 ### Step 1: Create a user via IAM
 
