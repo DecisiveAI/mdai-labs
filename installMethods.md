@@ -1,6 +1,6 @@
 # MDAI Install Methods
 
->[!INFO]
+>[!TIP]
 >**Read about [self-monitoring](self_monitoring.md) with MDAI to understand the right choice for you.**
 >
 >***We highly recommend choosing self-monitoring.***
@@ -47,7 +47,13 @@ Changes should be made in the following locations:
 ***Note**: Make sure you can access `values.yaml` your working directory. You have have to clone the `mdai-hub` repo.*
 
 ```sh
-helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --wait-for-jobs mdai mdai/mdai-hub --version v0.8.0-dev -f values.yml
+helm upgrade --install \
+  mdai mdai-hub \
+  --repo https://charts.mydecisive.ai \
+  --version v0.8.0-dev \
+  --namespace mdai \
+  --create-namespace \
+  --cleanup-on-fail
 ```
 
 >[!NOTE]
@@ -97,7 +103,14 @@ You must change `otelSdkDisabled: "true"` in two locations:
 ***Note**: Make sure you can access `values.yaml` your working directory. You have have to clone the `mdai-hub` repo.*
 
 ```sh
-helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --wait-for-jobs mdai mdai/mdai-hub --set mdai-s3-logs-reader.enabled=false --version v0.8.0-dev
+ helm upgrade --install \
+   mdai mdai-hub \
+   --repo https://charts.mydecisive.ai \
+   --set mdai-s3-logs-reader.enabled=false
+   --version v0.8.0-rc3 \
+   --namespace mdai \
+   --create-namespace \
+   --cleanup-on-fail
 ```
 
 ## MDAI Collector without Self-Monitoring (opt-out)
