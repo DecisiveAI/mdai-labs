@@ -33,7 +33,7 @@ For this example, we can choose _Local Code_ or _Other_. You will likely be [rec
 >
 > 🛑 **Warning**
 >
-> We do not recommend using this setup for a development or greater environment -- this is truly for the quickstart. If you're in AW EKS, we recommend [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) for a similar effect.
+> We do not recommend using this setup for a development or greater environment -- this is truly for the quickstart. If you're in AWS EKS, we recommend [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) for a similar effect.
 >
 >
 > ⚠️ **Important**
