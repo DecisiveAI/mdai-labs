@@ -34,7 +34,7 @@ Changes should be made in the following locations:
             otelExporterOtlpEndpoint: http://your-otlp-endpoint:4318
     ```
 
-2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-hub/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L59)
+2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-hub/blob/a10d29cbe0331b1f22b41c576754dff702685a55/values.yaml#L47)
     ```
     mdai-gateway:
       enabled: true
