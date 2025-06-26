@@ -78,7 +78,7 @@ Execute the shell script to generate and map new long-term aws credentials as a 
 
 After running this, you will have a secret created inside of your cluster.
 
-##### Deploy the MDAI Collector to your cluster**
+##### Deploy the MDAI Hub Monitor to your cluster**
 
 ```sh
 kubectl apply -f ./mdai/hub_monitor/mdai_monitor_no_secrets.yaml
