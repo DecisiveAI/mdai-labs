@@ -4,7 +4,7 @@ Make sure Docker is running.
 
 ## Step 1. Create kind cluster
 
- Use kind to create a new cluster.
+Use kind to create a new cluster.
 
 ```
 kind create cluster --name mdai
@@ -42,7 +42,13 @@ Send MDAI Smart Telemetry hub component logs to an s3 bucket for explainability 
 
 
 ```sh
-helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --wait-for-jobs mdai mdai/mdai-hub --version v0.8.0-dev
+helm upgrade --install \
+  mdai mdai-hub \
+  --repo https://charts.mydecisive.ai \
+  --version v0.8.0-dev \
+  --namespace mdai \
+  --create-namespace \
+  --cleanup-on-fail
 ```
 
 **Jump ahead to [Install MDAI Smart Telemetry Hub](#install-mdai-smart-telemetry-hub)**
