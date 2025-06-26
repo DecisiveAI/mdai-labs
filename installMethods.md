@@ -36,7 +36,7 @@ Changes should be made in the following locations:
 
 2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-hub/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L59)
     ```
-    event-handler-webservice:
+    mdai-gateway:
       enabled: true
       otelExporterOtlpEndpoint: http://your-otlp-endpoint:4318
     ```
