@@ -103,7 +103,7 @@ Manually update the MDAI Hub Custom Resource with Access keys (not recommended)
 
 From Step 1, you should have saved your credentials. You can update the file `mdai/hub_monitor/mdai_monitor.yaml` with your access keys.
 
-**Deploy the MDAI Collector with updated keys**
+**Deploy the MDAI Hub Monitor with updated keys**
 
 ```sh
 kubectl apply -f ./mdai/hub_monitor/mdai_monitor.yaml
