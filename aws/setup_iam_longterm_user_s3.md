@@ -93,7 +93,7 @@ kubectl apply -f ./mdai/hub_monitor/mdai_monitor_no_secrets.yaml
 
 <br />
 
-Jump ahead to [Install MDAI Collector](../install.md#install-mdai-dependencies-via-helm)
+Jump ahead to [Install MDAI Hub](../install.md#install-mdai-dependencies-via-helm)
 
 ---
 
