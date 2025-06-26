@@ -40,7 +40,7 @@ chmod +x mdai-kind.sh
 | Forward Logs to MDAI via Fluentd| `./mdai-kind.sh fluentd`        | Installs Fluentd Helm chart with log forwarding config        |
 
 
-### 💪 🐙 MDAI Advanced Commands
+### 💪 🐙 MDAI Advanced Commands (optional)
 
 | Action                             | Command                               | Description                                                   |
 |------------------------------------|---------------------------------------|---------------------------------------------------------------|
