@@ -131,7 +131,7 @@ kubectl apply -f ./mdai/hub_monitor/mdai_monitor.yaml
 
 <br />
 
-## Next steps: [Install MDAI Collector](../install.md#install-mdai-dependencies-via-helm)
+## Next steps: [Install MDAI Hub](../install.md#install-mdai-dependencies-via-helm)
 
 
 
