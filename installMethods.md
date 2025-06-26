@@ -18,11 +18,11 @@ Send MDAI Smart Telemetry hub component logs to a new or existing (not provided 
 
 #### Config Updates
 
-You can update the  `values.yaml` [(found in our mdai-helm-chart repo)](https://github.com/DecisiveAI/mdai-helm-chart/blob/main/values.yaml) to modify where logs are sent. This destination must be able to accepts OTLP HTTP logs.
+You can update the  `values.yaml` [(found in our mdai-hub repo)](https://github.com/DecisiveAI/mdai-hub/blob/main/values.yaml) to modify where logs are sent. This destination must be able to accepts OTLP HTTP logs.
 
 Changes should be made in the following locations:
 
-1. [MDAI Operator Blob](https://github.com/DecisiveAI/mdai-helm-chart/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L52)
+1. [MDAI Operator Blob](https://github.com/DecisiveAI/mdai-hub/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L52)
 
     ```
     mdai-operator:
@@ -34,7 +34,7 @@ Changes should be made in the following locations:
             otelExporterOtlpEndpoint: http://your-otlp-endpoint:4318
     ```
 
-2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-helm-chart/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L59)
+2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-hub/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L59)
     ```
     event-handler-webservice:
       enabled: true
@@ -44,7 +44,7 @@ Changes should be made in the following locations:
 
 #### Install MDAI
 
-***Note**: Make sure you can access `values.yaml` your working directory. You have have to clone the `mdai-helm-chart` repo.*
+***Note**: Make sure you can access `values.yaml` your working directory. You have have to clone the `mdai-hub` repo.*
 
 ```sh
 helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --wait-for-jobs mdai mdai/mdai-hub --version v0.8.0-dev -f values.yml
@@ -67,12 +67,12 @@ You can also choose to opt-out of self-monitoring by disabling OTel logging for 
 
 #### Config Updates
 
-If you do not want to send logs from these components, you can disable sending logs to the MDAI Collector by updating the `values.yaml` [(found in our mdai-helm-chart repo)](https://github.com/DecisiveAI/mdai-helm-chart/blob/main/values.yaml).
+If you do not want to send logs from these components, you can disable sending logs to the MDAI Collector by updating the `values.yaml` [(found in our mdai-hub repo)](https://github.com/DecisiveAI/mdai-hub/blob/main/values.yaml).
 
 
 You must change `otelSdkDisabled: "true"` in two locations:
 
-1. [MDAI Operator Blob](https://github.com/DecisiveAI/mdai-helm-chart/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L54)
+1. [MDAI Operator Blob](https://github.com/DecisiveAI/mdai-hub/blob/422e1c345806f634ed92db2a67a672ed7e9c7101/values.yaml#L54)
     ```
     mdai-operator:
       enabled: true
@@ -84,7 +84,7 @@ You must change `otelSdkDisabled: "true"` in two locations:
             otelSdkDisabled: "true"
     ```
 
-2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-helm-chart/blob/14ea7ea635176b30ca5e41e65a9da71e123b3486/values.yaml#L62)
+2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-hub/blob/14ea7ea635176b30ca5e41e65a9da71e123b3486/values.yaml#L62)
     ```
     mdai-gateway:
       enabled: true
@@ -94,7 +94,7 @@ You must change `otelSdkDisabled: "true"` in two locations:
 
 #### Install MDAI
 
-***Note**: Make sure you can access `values.yaml` your working directory. You have have to clone the `mdai-helm-chart` repo.*
+***Note**: Make sure you can access `values.yaml` your working directory. You have have to clone the `mdai-hub` repo.*
 
 ```sh
 helm upgrade --install --create-namespace --namespace mdai --cleanup-on-fail --wait-for-jobs mdai mdai/mdai-hub --set mdai-s3-logs-reader.enabled=false --version v0.8.0-dev

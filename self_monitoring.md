@@ -7,7 +7,7 @@ The MDAI Smart Telemetry Hub contains complex infrastructure. To maintain and mo
 
 ## How it works
 
-The `mdai-helm-chart` installed `mdai-operator` and `mdai-gateway` expect a destination to send their logs to, but this chart does not manage deploying the logs destination for those services.
+The `mdai-hub` installed `mdai-operator` and `mdai-gateway` expect a destination to send their logs to, but this chart does not manage deploying the logs destination for those services.
 
 The `mdai-operator` has the ability to manage an opinionated collector, via compatible configurations, called the `mdai-collector` (sometimes referred to as the `hub-monitor`). The `mdai-collector` receives from this fixed list of services and sends the logs to a compatible destination.
 
