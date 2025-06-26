@@ -84,7 +84,7 @@ You must change `otelSdkDisabled: "true"` in two locations:
             otelSdkDisabled: "true"
     ```
 
-2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-hub/blob/14ea7ea635176b30ca5e41e65a9da71e123b3486/values.yaml#L62)
+2. [mdai-gateway blob](https://github.com/DecisiveAI/mdai-hub/blob/a10d29cbe0331b1f22b41c576754dff702685a55/values.yaml#L48)
     ```
     mdai-gateway:
       enabled: true
