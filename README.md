@@ -58,4 +58,4 @@ chmod +x mdai-kind.sh
 
 >[!WARNING]
 >
->You will likely see an error with the `svc/mdai-s3-logs-reader-service`. This is due to a missing secret attached to this service that enable this service to write to S3. You can jump ahead to [MDAI collector install with s3 access](./aws/setup_iam_longterm_user_s3.md). Follow instructions from here through the rest of the installation flow.
+>You will likely see an error with the `svc/mdai-s3-logs-reader-service`. This is due to a missing secret attached to this service that enable this service to write to S3. You can jump ahead to [MDAI collector install with s3 access](https://docs.mydecisive.ai/quickstart/setup_iam_longterm_user_s3). Follow instructions from here through the rest of the installation flow.
