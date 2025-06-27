@@ -2,12 +2,12 @@ apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   labels:
-    mdaihub-name: mdaihub-sample
-  name: gateway-3
+    mdaihub-name: mdaihub-df
+  name: gateway
   namespace: mdai
 spec:
-  managementState: managed
-  image: otel/opentelemetry-collector-contrib:0.118.0
+  image: otel/opentelemetry-collector-contrib:0.117.0
+  # These are your otel scaling settings. They cover the k8s HPA and memory/cpu allocated for the otel collector to run against.
   replicas: 5
   resources:
     limits:
@@ -18,23 +18,12 @@ spec:
       cpu: "100m"
   envFrom:
     - configMapRef:
-        name: mdaihub-sample-variables
+        # this is the config map which will store your variables that your collector will use
+        name: mdaihub-df-variables
   config:
     receivers:
       fluentforward:
         endpoint: '${env:MY_POD_IP}:8006'
-      otlp:
-        protocols:
-          grpc:
-            endpoint: '${env:MY_POD_IP}:4317'
-          http:
-            endpoint: '${env:MY_POD_IP}:4318'
-            # Since this collector needs to receive data from the web, enable cors for all origins
-            # `allowed_origins` can be refined for your deployment domain
-            cors:
-              allowed_origins:
-                - "http://*"
-                - "https://*"
 
     extensions:
       # The health_check extension is mandatory for this chart.
@@ -50,13 +39,12 @@ spec:
         spike_limit_percentage: 15
 
       batch:
-        send_batch_size: 1000
-        send_batch_max_size: 10000
+        send_batch_size: 10000
         timeout: 13s
 
       groupbyattrs:
         keys:
-          - service.name
+          - mdai_service
 
       resource/observer_receiver_tag:
         attributes:
@@ -70,22 +58,17 @@ spec:
             value: "exported"
             action: upsert
 
-      filter/severity:
-        error_mode: ignore
-        logs:
-          log_record:
-            - 'attributes["log_level"] == "INFO"'
-
       filter/service_list:
         error_mode: ignore
         logs:
           log_record:
-            - 'IsMatch(attributes["service.name"], "${env:SERVICE_LIST_REGEX}")'
+            - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
 
     exporters:
-      debug: { }
+      debug: {}
+
       otlp/observer:
-        endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
+        endpoint: mdaihub-df-observer-collector-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
 
@@ -105,12 +88,29 @@ spec:
       extensions:
         - health_check
       pipelines:
-        logs/customer_pipeline:
-          receivers: [ otlp, fluentforward ]
-          processors: [ filter/service_list, memory_limiter, batch, groupbyattrs, resource/observer_exporter_tag ]
-          exporters: [ debug, otlp/observer ]
+        logs/fluent:
+          receivers: [ fluentforward ]
+          processors: [
+            filter/service_list,
+            # DO NOT CHANGE ORDER OF THE FOLLOWING PROCESSORS
+            resource/observer_exporter_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch,
+          ]
+          exporters: [otlp/observer, debug]
 
-        logs/watch_receivers:
-          receivers: [ otlp, fluentforward ]
-          processors: [ memory_limiter, batch, groupbyattrs, resource/observer_receiver_tag ]
-          exporters: [ debug, otlp/observer ]
+        logs/observer_receivers:
+          # Pipeline logs/observer_receivers must be after entry point of telemetry pipeline and before any filtering occurs
+          receivers: [ fluentforward ]
+          processors: [
+            resource/observer_receiver_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ otlp/observer ]
