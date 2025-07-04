@@ -1,5 +1,4 @@
-# 0.8 TESTING
-
+# Manual Installation
 
 ## Step 1. Create kind cluster
 
@@ -10,7 +9,13 @@ kind create cluster -n mdai
 ## Step 2. Install `cert-manager`
 
 ```sh
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+
+kubectl wait --for=condition=Established crd/certificates.cert-manager.io --timeout=60s
+
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=60s
+
+kubectl wait --for=condition=Available=True deploy -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=60s
 ```
 
 ## Step 3. Install MDAI dependencies via Helm chart
@@ -64,18 +69,8 @@ kubectl apply -f ./otel/otel_ref.yaml -n mdai
 helm upgrade --install --repo https://fluent.github.io/helm-charts fluent fluentd -f ./synthetics/loggen_fluent_config.yaml
 ```
 
-## Step 8: Check alerts in Prometheus
+## Step 8: What do to after manual install?
 
-### Forward prometheus
-
-```sh
-kubectl -n mdai port-forward svc/prometheus-operated 9090:9090
-```
-*Note: can also be done using k9s*
-
-
-### Check active alerts
-
-See your alerts and dynamic filtration in action
-
-> Visit http://localhost:9090/alerts
+Jump to our docs to see how to use mdai to:
+1. [setup dashboards for mdai monitoring](https://docs.mydecisive.ai/quickstart/dashboard/index.html)
+2. [automate dynamic filtration](https://docs.mydecisive.ai/quickstart/filter/index.html)

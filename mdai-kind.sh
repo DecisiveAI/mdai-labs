@@ -148,13 +148,12 @@ clean_configs() {
     return
   fi
 
-
   kubectl delete -f ./synthetics/loggen_service_xtra_noisy.yaml -n "${NAMESPACE}"
   kubectl delete -f ./synthetics/loggen_service_noisy.yaml -n "${NAMESPACE}"
   kubectl delete -f ./synthetics/loggen_services.yaml -n "${NAMESPACE}"
-  kubectl delete -f ./otel/0.8/otel_ref.yaml -n "${NAMESPACE}"
-  kubectl delete -f ./mdai/hub/0.8/hub_ref.yaml -n "${NAMESPACE}"
-  helm uninstall fluentd
+  kubectl delete -f ./otel/otel_ref.yaml -n "${NAMESPACE}"
+  kubectl delete -f ./mdai/hub/hub_ref.yaml -n "${NAMESPACE}"
+  helm uninstall -n default fluent
 
   echo "✅ Namespace '${NAMESPACE}' cleaned (resources deleted, namespace remains)"
 }
