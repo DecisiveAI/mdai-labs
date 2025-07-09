@@ -3,7 +3,7 @@ kind: OpenTelemetryCollector
 metadata:
   labels:
     mdaihub-name: mdaihub-sample
-  name: gateway-3
+  name: gateway
   namespace: mdai
 spec:
   managementState: managed
@@ -76,7 +76,7 @@ spec:
         error_mode: ignore
         logs:
           log_record:
-            - 'attributes["log_level"] == "INFO"'
+            - 'attributes["level"] == "INFO"'
       
       # UNCOMMENT THE FOLLOWING LINE TO ADD FILTER PROCESSOR
       # filter/service_list:
@@ -91,25 +91,22 @@ spec:
         log_statements:
           - context: log
             statements:
-            - set(severity_number, 17) where attributes["log_level"] == "ERROR"
-            - set(severity_number, 13) where attributes["log_level"] == "WARNING"
-            - set(severity_number, 9) where attributes["log_level"] == "INFO"
-            - set(severity_number, 5) where attributes["log_level"] == "DEBUG"
-            - set(severity_text, "ERROR") where attributes["log_level"] == "ERROR"
-            - set(severity_text, "WARNING") where attributes["log_level"] == "WARNING"
-            - set(severity_text, "INFO") where attributes["log_level"] == "INFO"
-            - set(severity_text, "DEBUG") where attributes["log_level"] == "DEBUG"
+            - set(severity_number, 17) where attributes["level"] == "ERROR"
+            - set(severity_number, 13) where attributes["level"] == "WARNING"
+            - set(severity_number, 9) where attributes["level"] == "INFO"
+            - set(severity_number, 5) where attributes["level"] == "DEBUG"
+            - set(severity_text, "ERROR") where attributes["level"] == "ERROR"
+            - set(severity_text, "WARNING") where attributes["level"] == "WARNING"
+            - set(severity_text, "INFO") where attributes["level"] == "INFO"
+            - set(severity_text, "DEBUG") where attributes["level"] == "DEBUG"
 
     exporters:
-      debug/in: { }
-      debug/out: { }
-      debug/counts: {}
       otlp/observer:
         endpoint: sample-mdai-observer-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
       otlphttp/prometheus:
-        endpoint: http://prometheus-operated.mdai.svc.cluster.local:9090/api/v1/otlp
+        endpoint: http://kube-prometheus-stack-prometheus.mdai.svc.cluster.local:9090/api/v1/otlp
         tls:
           insecure: true
 
