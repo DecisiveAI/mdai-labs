@@ -71,11 +71,11 @@ spec:
             action: upsert
 
       # UNCOMMENT THE FOLLOWING LINE TO ADD FILTER PROCESSOR
-      # filter/service_list:
-      #   error_mode: ignore
-      #   logs:
-      #     log_record:
-      #       - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
+      filter/service_list:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
 
     exporters:
       debug: { }
@@ -97,7 +97,7 @@ spec:
           receivers: [ otlp, fluentforward ]
           processors: [
             # UNCOMMENT THE FOLLOWING LINE TO START FILTRATION
-            # filter/service_list,
+            filter/service_list,
             # DO NOT CHANGE ORDER
             resource/observer_exporter_tag,
             groupbyattrs,

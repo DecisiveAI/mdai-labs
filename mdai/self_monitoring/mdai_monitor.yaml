@@ -9,4 +9,4 @@ spec:
   logs:
     s3:
       s3Region: "us-east-1"
-      s3Bucket: "your-bucket-name"
+      s3Bucket: "mdai-collector-logs"
