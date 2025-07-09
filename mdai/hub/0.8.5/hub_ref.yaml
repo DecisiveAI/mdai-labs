@@ -63,6 +63,14 @@ spec:
       severity: warning
       for: 3m
       keep_firing_for: 3m
+    # - name: anomalous_error_rate
+    #   # two part query
+    #   # first part checks if the error rate is a specific multiplier of the normal error rate over the last hour
+    #   # second part ensures there is at least an hour's worth of data to check against, to prevent false-positives
+    #   expr: 'sum(increase(error_logs_by_service_total[5m])) by (mdai_service) > 0.1 * sum(avg_over_time(increase(error_logs_by_service_total[5m])[1h:])) by (mdai_service)'
+    #   severity: warning
+    #   for: 3m
+    #   keep_firing_for: 3m
     - name: anomalous_mdai_error_rate
       # two part query
       # first part checks if the error rate is a specific multiplier of the normal error rate over the last hour
