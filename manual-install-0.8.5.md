@@ -90,7 +90,13 @@ kubectl apply -f ./mdai/observer/0.8.5/observer_ref.yaml -n mdai
 kubectl apply -f ./otel/otel_log_severity_counts.yaml -n mdai
 ```
 
-## Step 7: Fwd logs from the loggen services to MDAI
+## Step 7: Configure prometheus to scrape error log counts from collector
+
+```sh
+kubectl apply -f ./prometheus/scrape_collector_count_metrics.yaml -n mdai
+```
+
+## Step 8: Fwd logs from the loggen services to MDAI
 ```sh
 helm upgrade --install --repo https://fluent.github.io/helm-charts fluent fluentd -f ./synthetics/loggen_fluent_config.yaml
 ```

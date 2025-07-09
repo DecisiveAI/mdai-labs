@@ -105,10 +105,11 @@ spec:
         endpoint: sample-mdai-observer-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
-      otlphttp/prometheus:
-        endpoint: http://kube-prometheus-stack-prometheus.mdai.svc.cluster.local:9090/api/v1/otlp
-        tls:
-          insecure: true
+      prometheus:
+        endpoint: 0.0.0.0:8899
+        metric_expiration: 180m
+        resource_to_telemetry_conversion:
+          enabled: true
 
     connectors:
       count:
@@ -172,4 +173,4 @@ spec:
         metrics/log_counts:
           receivers: [count]
           processors: [batch, deltatocumulative]
-          exporters: [otlphttp/prometheus]
+          exporters: [prometheus]
