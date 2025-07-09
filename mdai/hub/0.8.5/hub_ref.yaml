@@ -59,7 +59,7 @@ spec:
       # two part query
       # first part checks if the error rate is a specific multiplier of the normal error rate over the last hour
       # second part ensures there is at least an hour's worth of data to check against, to prevent false-positives
-      expr: 'sum(increase(error_logs_by_service_total[5m])) by (mdai_service) > 0.9 * sum(avg_over_time(increase(error_logs_by_service_total[5m])[1h:])) by (mdai_service) and (sum by (mdai_service) (error_logs_by_service_total offset 1h))'
+      expr: 'sum(increase(error_logs_by_service_total[5m])) by (mdai_service) > 2 * sum(avg_over_time(increase(error_logs_by_service_total[5m])[1h:])) by (mdai_service) and (sum by (mdai_service) (error_logs_by_service_total offset 1h))'
       severity: warning
       for: 3m
       keep_firing_for: 3m
@@ -67,7 +67,7 @@ spec:
       # two part query
       # first part checks if the error rate is a specific multiplier of the normal error rate over the last hour
       # second part ensures there is at least an hour's worth of data to check against, to prevent false-positives
-      expr: '(sum(increase(mdai_errors_by_component_total[5m])) by (service_name, instance) > 0.9 * sum(avg_over_time(increase(mdai_errors_by_component_total[5m])[1h:])) by (service_name, instance)) and (sum by (service_name, instance) (mdai_errors_by_component_total offset 1h))'
+      expr: '(sum(increase(mdai_errors_by_component_total[5m])) by (service_name, instance) > 1.5 * sum(avg_over_time(increase(mdai_errors_by_component_total[5m])[1h:])) by (service_name, instance)) and (sum by (service_name, instance) (mdai_errors_by_component_total offset 1h))'
       severity: warning
       for: 3m
       keep_firing_for: 3m
