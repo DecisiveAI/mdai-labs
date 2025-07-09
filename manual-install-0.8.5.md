@@ -39,7 +39,9 @@ helm upgrade --install mdai ../mdai-helm-chart \
   --cleanup-on-fail
 ```
 
-#### From remote
+<details>
+
+<summary>From remote</summary>
 
 ```sh
 helm upgrade --install mdai mdai-hub \
@@ -52,6 +54,8 @@ helm upgrade --install mdai mdai-hub \
   --set mdai-s3-logs-reader.enabled=false \
   --cleanup-on-fail >/dev/null 2>&1 || echo "⚠️ mdai: unable to install helm chart"
 ```
+
+</details>
 
 ## Step 4: Install Log Generators
 
