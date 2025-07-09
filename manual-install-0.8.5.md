@@ -110,3 +110,7 @@ helm upgrade --install --repo https://fluent.github.io/helm-charts fluent fluent
 Jump to our docs to see how to use mdai to:
 1. [setup dashboards for mdai monitoring](https://docs.mydecisive.ai/quickstart/dashboard/index.html)
 2. [automate dynamic filtration](https://docs.mydecisive.ai/quickstart/filter/index.html)
+
+## Appendix: how to make error conditions happen for testing
+
+* The `anomalous_error_rate` prometheus alert currently requires at least an hour's worth of data to trigger. Swap in [this version](https://github.com/DecisiveAI/mdai-labs/blob/e5c0309ad478cdd441c7463def5b0a9390cbb40b/mdai/hub/0.8.5/hub_ref.yaml#L66-L73) to guarantee alerts trigger that should call the webhook.
