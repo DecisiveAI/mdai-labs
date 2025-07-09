@@ -1,5 +1,7 @@
 # Manual Installation
 
+> Requires using [this branch](https://github.com/DecisiveAI/mdai-labs/tree/rlaw/ENG-564-error-log-alerting) of the mdai-hub
+
 ## Step 1. Create kind cluster
 
 ```sh
@@ -69,6 +71,8 @@ kubectl apply -f ./synthetics/loggen_services.yaml
 ```
 
 ## Step 5: Create + Install MDAI Hub
+
+> Get your Slack wehbook URL and update the `hub_ref.yaml` [here](https://github.com/DecisiveAI/mdai-labs/blob/00b05e9589d53b6cfac3361c4605b38f41b702a3/mdai/hub/0.8.5/hub_ref.yaml#L88-L109) to receive Slack messages. Follow [this guide](https://api.slack.com/messaging/webhooks) to get a webhook URL.
 
 ```sh
 kubectl apply -f ./mdai/hub/0.8.5/hub_ref.yaml -n mdai

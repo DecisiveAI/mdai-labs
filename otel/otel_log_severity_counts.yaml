@@ -121,7 +121,7 @@ spec:
             conditions:
               - severity_number >= SEVERITY_NUMBER_ERROR
             attributes:
-              - key: service.name
+              - key: mdai_service
                 default_value: ""
 
     service:
