@@ -5,7 +5,7 @@ KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-mdai}"
 NAMESPACE="${NAMESPACE:-mdai}"
 HELM_REPO_URL="https://charts.mydecisive.ai"
 HELM_CHART_NAME="mdai-hub"
-HELM_CHART_VERSION="${HELM_CHART_VERSION:-v0.8.0-rc3}"
+HELM_CHART_VERSION="${HELM_CHART_VERSION:-v0.8.0}"
 CERT_MANAGER_URL="https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
 
 ensure_command() {
@@ -73,9 +73,9 @@ create_cluster() {
     --namespace "${NAMESPACE}" \
     --create-namespace \
     --version "${HELM_CHART_VERSION}" \
-    --set mdai-operator.manager.env.otelSdkDisabled=true \
-    --set mdai-gateway.otelSdkDisabled=true \
-    --set mdai-s3-logs-reader.enabled=false \
+    # --set mdai-operator.manager.env.otelSdkDisabled=true \
+    # --set mdai-gateway.otelSdkDisabled=true \
+    # --set mdai-s3-logs-reader.enabled=false \
     --cleanup-on-fail >/dev/null 2>&1 || echo "⚠️ mdai: unable to install helm chart"
   echo "✅ MDAI cluster installed!"
 
