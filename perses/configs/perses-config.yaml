@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: perses-datasources
+  namespace: mdai
+  labels:
+    "perses.dev/resource": "true"
+data:
+  01_project.yaml: |
+    kind: Project
+    metadata:
+      name: "MDAI"
+    spec:
+      displayName: "MDAI"
+  02_prometheus.yaml: |
+    kind: GlobalDatasource
+    metadata:
+      name: "Prometheus"
+    spec:
+      default: true
+      plugin:
+        kind: PrometheusDatasource
+        spec:
+          proxy:
+            kind: HTTPProxy
+            spec:
+              url: http://kube-prometheus-stack-prometheus.mdai.svc.cluster.local:9090
