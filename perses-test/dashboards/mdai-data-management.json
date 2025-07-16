@@ -1,0 +1,634 @@
+{
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "de978rcegwfswb",
+    "createdAt": "2025-07-10T23:23:46.604864046Z",
+    "updatedAt": "2025-07-10T23:23:46.604864046Z",
+    "version": 0,
+    "project": "mdai"
+  },
+  "spec": {
+    "display": {
+      "name": "MDAI Data Management"
+    },
+    "panels": {
+      "0_0": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "MDAI Total by $groupByLabel",
+            "description": "Shows how many $groupByLabel monitored based on the current selected time interval."
+          },
+          "plugin": {
+            "kind": "StatChart",
+            "spec": {
+              "calculation": "last-number",
+              "metricLabel": "",
+              "thresholds": {
+                "defaultColor": "#9e57ae",
+                "steps": []
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "PrometheusDatasource",
+                      "name": "prometheus"
+                    },
+                    "query": "count(count by($groupByLabel) (rate($receiverMetric{data_type=\"$dataType\"}[$__rate_interval])))"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "0_1": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "MDAI I/O $dataType",
+            "description": "Total ingress and egress $dataType filtered through MDAI operator."
+          },
+          "plugin": {
+            "kind": "BarChart",
+            "spec": {
+              "calculation": "last",
+              "format": {
+                "unit": "bytes"
+              },
+              "mode": "value",
+              "sort": "desc"
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum(sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])))",
+                    "seriesNameFormat": "Received by Bytes"
+                  }
+                }
+              }
+            },
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum(sum by($groupByLabel) (increase($exporterMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])))",
+                    "seriesNameFormat": "Sent by Bytes"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "0_2": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Average Percentage Difference I/O",
+            "description": "Average percentage difference between ingress and egress $dataType."
+          },
+          "plugin": {
+            "kind": "GaugeChart",
+            "spec": {
+              "calculation": "last",
+              "format": {
+                "unit": "percent"
+              },
+              "max": 100,
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6d3b78",
+                    "value": 0
+                  },
+                  {
+                    "color": "#eabef3",
+                    "value": 0
+                  },
+                  {
+                    "color": "#e288f6",
+                    "value": 10
+                  },
+                  {
+                    "color": "#be5ad4",
+                    "value": 20
+                  },
+                  {
+                    "color": "#9e4db0",
+                    "value": 30
+                  },
+                  {
+                    "color": "#8d33a0",
+                    "value": 40
+                  },
+                  {
+                    "color": "#6d3b78",
+                    "value": 50
+                  },
+                  {
+                    "color": "#61306b",
+                    "value": 60
+                  },
+                  {
+                    "color": "#572961",
+                    "value": 70
+                  },
+                  {
+                    "color": "#481254",
+                    "value": 80
+                  },
+                  {
+                    "color": "#2f0837",
+                    "value": 90
+                  }
+                ]
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "PrometheusDatasource",
+                      "name": "prometheus"
+                    },
+                    "query": "(\n  sum(increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:]))\n  -\n  sum(increase($exporterMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:]))\n)\n/\nsum(increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:]))\n* 100",
+                    "seriesNameFormat": "Difference I/O"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "1_0": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "MDAI I/O by $groupByLabel",
+            "description": "Total number of $dataType and size per service based on time interval for ingress and egress."
+          },
+          "plugin": {
+            "kind": "Table",
+            "spec": {
+              "cellSettings": [],
+              "columnSettings": [
+                {
+                  "header": "Services",
+                  "hide": false,
+                  "name": "service",
+                  "enableSorting": true,
+                  "sort": "desc"
+                },
+                {
+                  "name": "timestamp",
+                  "hide": true,
+                  "header": "timestamp"
+                },
+                {
+                  "name": "value #1",
+                  "header": "Received"
+                },
+                {
+                  "name": "value #2",
+                  "header": "Receiver Bytes",
+                  "format": {
+                    "unit": "bytes"
+                  }
+                },
+                {
+                  "name": "value #3",
+                  "header": "Sent"
+                },
+                {
+                  "name": "value #4",
+                  "header": "Sent Bytes",
+                  "format": {
+                    "unit": "bytes"
+                  }
+                }
+              ],
+              "density": "standard",
+              "pagination": true,
+              "transforms": [
+                {
+                  "kind": "MergeSeries",
+                  "spec": {}
+                }
+              ]
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "PrometheusDatasource",
+                      "name": "prometheus"
+                    },
+                    "query": "label_replace(\n  sum by ($groupByLabel) (increase($receiverMetric{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",          \n  \"$groupByLabel\",\n  \"(.*)\"\n)",
+                    "seriesNameFormat": ""
+                  }
+                }
+              }
+            },
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "PrometheusDatasource",
+                      "name": "prometheus"
+                    },
+                    "query": "label_replace(\n  sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)"
+                  }
+                }
+              }
+            },
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "PrometheusDatasource",
+                      "name": "prometheus"
+                    },
+                    "query": "label_replace(\n  sum by($groupByLabel) (increase($exporterMetric{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)"
+                  }
+                }
+              }
+            },
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "PrometheusDatasource",
+                      "name": "prometheus"
+                    },
+                    "query": "label_replace(\n  sum by($groupByLabel) (increase($exporterMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "1_1": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Top Talkers Recieved $dataType Totals",
+            "description": "Total number of $dataType from top talkers $groupByLabel ingested by MDAI"
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": {
+                "mode": "list",
+                "position": "right",
+                "values": []
+              },
+              "visual": {
+                "areaOpacity": 0.2,
+                "connectNulls": false,
+                "display": "line",
+                "lineWidth": 1.5,
+                "pointRadius": 3
+              },
+              "yAxis": {
+                "format": {
+                  "unit": "bytes"
+                },
+                "min": 0
+              },
+              "querySettings": []
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "PrometheusDatasource",
+                      "name": "prometheus"
+                    },
+                    "query": "topk(2, sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])))",
+                    "seriesNameFormat": "{{$groupByLabel}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "1_2": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Top Talkers Sent $dataType Totals",
+            "description": "Total number of $dataType from top talkers $groupByLabel sent to configured destinations"
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": {
+                "mode": "list",
+                "position": "right",
+                "values": []
+              },
+              "visual": {
+                "areaOpacity": 0.18,
+                "connectNulls": false,
+                "display": "line",
+                "lineWidth": 1
+              },
+              "yAxis": {
+                "format": {
+                  "unit": "bytes"
+                },
+                "min": 0
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "PrometheusDatasource",
+                      "name": "prometheus"
+                    },
+                    "query": "sum by($groupByLabel) (increase($exporterMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:]))\n  and on($groupByLabel)\ntopk(2, sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])))",
+                    "seriesNameFormat": "{{$groupByLabel}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Totals for I/O $dataType",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 10,
+              "content": {
+                "$ref": "#/spec/panels/0_1"
+              }
+            },
+            {
+              "x": 12,
+              "y": 0,
+              "width": 8,
+              "height": 10,
+              "content": {
+                "$ref": "#/spec/panels/0_2"
+              }
+            },
+            {
+              "x": 20,
+              "y": 0,
+              "width": 4,
+              "height": 10,
+              "content": {
+                "$ref": "#/spec/panels/0_0"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "$dataType",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 11,
+              "content": {
+                "$ref": "#/spec/panels/1_0"
+              }
+            },
+            {
+              "x": 0,
+              "y": 11,
+              "width": 12,
+              "height": 16,
+              "content": {
+                "$ref": "#/spec/panels/1_1"
+              }
+            },
+            {
+              "x": 12,
+              "y": 11,
+              "width": 12,
+              "height": 16,
+              "content": {
+                "$ref": "#/spec/panels/1_2"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Active Filters",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": []
+        }
+      }
+    ],
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Receiver Metric",
+            "hidden": false
+          },
+          "defaultValue": "items_received_by_service_total",
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "PrometheusLabelValuesVariable",
+            "spec": {
+              "labelName": "__name__",
+              "matchers": [
+                "{__name__=~\".+\", data_type!=\"\"}"
+              ]
+            }
+          },
+          "name": "receiverMetric"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Receiver Metric by Bytes",
+            "hidden": false
+          },
+          "defaultValue": "bytes_received_by_service_total",
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "PrometheusLabelValuesVariable",
+            "spec": {
+              "labelName": "__name__",
+              "matchers": [
+                "{__name__=~\".+\", data_type!=\"\"}"
+              ]
+            }
+          },
+          "name": "receiverMetricByBytes"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Exporter Metric",
+            "hidden": false
+          },
+          "defaultValue": "items_sent_by_service_total",
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "sort": "alphabetical-desc",
+          "plugin": {
+            "kind": "PrometheusLabelValuesVariable",
+            "spec": {
+              "labelName": "__name__",
+              "matchers": [
+                "{__name__=~\".+\", data_type!=\"\"}"
+              ]
+            }
+          },
+          "name": "exporterMetric"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Exporter Metric by Bytes",
+            "hidden": false
+          },
+          "defaultValue": "bytes_sent_by_service_total",
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "sort": "alphabetical-desc",
+          "plugin": {
+            "kind": "PrometheusLabelValuesVariable",
+            "spec": {
+              "labelName": "__name__",
+              "matchers": [
+                "{__name__=~\".+\", data_type!=\"\"}"
+              ]
+            }
+          },
+          "name": "exporterMetricByBytes"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Data Type",
+            "hidden": false
+          },
+          "defaultValue": "logs",
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "plugin": {
+            "kind": "StaticListVariable",
+            "spec": {
+              "values": [
+                "logs",
+                "metrics",
+                "traces"
+              ]
+            }
+          },
+          "name": "dataType"
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "display": {
+            "name": "Group By Label",
+            "hidden": false
+          },
+          "value": "mdai_service",
+          "name": "groupByLabel"
+        }
+      }
+    ],
+    "duration": "30m",
+    "refreshInterval": "0s",
+    "datasources": {}
+  }
+}

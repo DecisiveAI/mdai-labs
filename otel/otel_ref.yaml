@@ -70,17 +70,26 @@ spec:
             value: "exported"
             action: upsert
 
-      # UNCOMMENT THE FOLLOWING LINE TO ADD FILTER PROCESSOR
-      # filter/service_list:
-      #   error_mode: ignore
-      #   logs:
-      #     log_record:
-      #       - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
+      filter/severity:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'attributes["log_level"] == "INFO"'
+      
+      filter/service_list:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
 
     exporters:
       debug: { }
       otlp/observer:
         endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
+        tls:
+          insecure: true
+      otlp/hub-monitor:
+        endpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
         tls:
           insecure: true
 
@@ -97,7 +106,7 @@ spec:
           receivers: [ otlp, fluentforward ]
           processors: [
             # UNCOMMENT THE FOLLOWING LINE TO START FILTRATION
-            # filter/service_list,
+            filter/service_list,
             # DO NOT CHANGE ORDER
             resource/observer_exporter_tag,
             groupbyattrs,
