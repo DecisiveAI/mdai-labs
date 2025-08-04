@@ -114,6 +114,12 @@ install_hub() {
   echo "✅ MDAI Hub deployed"
 }
 
+install_observers() {
+  echo "🧠 Installing MDAI Observers..."
+  kubectl apply -f ./mdai/observers/observers_ref.yaml -n "${NAMESPACE}"
+  echo "✅ MDAI Hub deployed"
+}
+
 install_collector() {
   echo "📥 Installing OpenTelemetry Collector..."
   kubectl apply -f ./otel/otel_ref.yaml -n "${NAMESPACE}"
@@ -200,6 +206,7 @@ main() {
     delete)    delete_cluster ;;
     logs)      deploy_log_generators ;;
     hub)       install_hub ;;
+    observers) install_observers ;;
     collector) install_collector ;;
     fluentd)   forward_logs ;;
     aws_secret) aws_secret_from_env ;;

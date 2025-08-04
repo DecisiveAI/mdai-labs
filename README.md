@@ -22,6 +22,8 @@ You can use the following commands to setup and install your mdai instance local
 
 ./mdai-kind.sh hub
 
+./mdai-kind.sh observers
+
 ./mdai-kind.sh collector
 
 ./mdai-kind.sh fluentd
