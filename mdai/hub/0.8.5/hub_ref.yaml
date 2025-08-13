@@ -1,0 +1,125 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-sample
+  namespace: mdai
+spec:
+  variables:
+    - key: service_list
+      serializeAs:
+        - name: "SERVICE_LIST_REGEX"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+        - name: "SERVICE_LIST_CSV"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      # below properties are optional
+      dataType: set
+      storageType: "mdai-valkey"
+    - key: team_list
+      serializeAs:
+        - name: "TEAM_LIST_REGEX"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+        - name: "TEAM_LIST_CSV"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      # below properties are optional
+      dataType: set
+      storageType: "mdai-valkey"
+
+  prometheusAlert:
+    - name: top_talkers
+      expr: 'sum(increase(bytes_received_by_service_total{mdai_service!=""}[1m])) by (mdai_service, data_type) > 800*1024'
+      severity: warning
+      for: 1m
+      keep_firing_for: 1m
+    - name: top_listeners
+      expr: 'sum(increase(bytes_sent_by_service_total{mdai_service!=""}[1h])) by (mdai_service, data_type) > 10*1024*1024'
+      severity: warning
+      for: 15m
+      keep_firing_for: 10m
+    - name: top_team_talkers
+      expr: 'sum(increase(bytes_received_by_team_region_total{team!=""}[1h])) by (team, data_type) > 10*1024*1024'
+      severity: warning
+      for: 3m
+      keep_firing_for: 10m
+    - name: anomalous_error_rate
+      # two part query
+      # first part checks if the error rate is a specific multiplier of the normal error rate over the last hour
+      # second part ensures there is at least an hour's worth of data to check against, to prevent false-positives
+      expr: 'sum(increase(error_logs_by_service_total[5m])) by (mdai_service) > 2 * sum(avg_over_time(increase(error_logs_by_service_total[5m])[1h:])) by (mdai_service) and (sum by (mdai_service) (error_logs_by_service_total offset 1h))'
+      severity: warning
+      for: 3m
+      keep_firing_for: 3m
+    - name: anomalous_mdai_error_rate
+      # two part query
+      # first part checks if the error rate is a specific multiplier of the normal error rate over the last hour
+      # second part ensures there is at least an hour's worth of data to check against, to prevent false-positives
+      expr: '(sum(increase(mdai_errors_by_component_total[5m])) by (service_name, instance) > 1.5 * sum(avg_over_time(increase(mdai_errors_by_component_total[5m])[1h:])) by (service_name, instance)) and (sum by (service_name, instance) (mdai_errors_by_component_total offset 1h))'
+      severity: warning
+      for: 3m
+      keep_firing_for: 3m
+    - name: errors_for_service1234
+      expr: 'sum(increase(error_logs_by_service_total{mdai_service="service1234"}[5m])) by (mdai_service) > 500'
+      severity: warning
+      for: 3m
+      keep_firing_for: 3m
+
+  automations:
+    - eventRef: top_talkers
+      workflow:
+        - handlerRef: HandleNoisyServiceAlert
+          args:
+            payload_val_ref: mdai_service
+            variable_ref: service_list
+    - eventRef: top_team_talkers
+      workflow:
+        - handlerRef: HandleNoisyServiceAlert
+          args:
+            payload_val_ref: team
+            variable_ref: team_list
+    # - eventRef: anomalous_error_rate
+    #   workflow:
+    #     - handlerRef: HandleCallSlackWebhook
+    #       args:
+    #         payload_val_ref_primary: mdai_service
+    #         payload_val_ref_secondary: alertname
+    #         payload_val_ref_tertiary: status
+    #         message: Service was >2x expected error rate for five minutes compared to the last hour!
+    #         link_text: See alert in Prometheus
+    #         link_url: http://localhost:9090/alerts
+    #         webhook_url: https://hooks.slack.com/services/123/456/789
+    - eventRef: anomalous_mdai_error_rate
+      workflow:
+        - handlerRef: HandleCallSlackWebhook
+          args:
+            payload_val_ref_primary: service_name
+            payload_val_ref_secondary: alertname
+            payload_val_ref_tertiary: status
+            message: MDAI Hub Component was >1.5x expected error rate for five minutes compared to the last hour!
+            link_text: See alert in Prometheus
+            link_url: http://localhost:9090/alerts
+            webhook_url: https://hooks.slack.com/services/123/456/789
+    - eventRef: errors_for_service1234
+      workflow:
+        - handlerRef: HandleCallSlackWebhook
+          args:
+            payload_val_ref_primary: mdai_service
+            payload_val_ref_secondary: alertname
+            payload_val_ref_tertiary: status
+            message: Service had more than 500 errors in the last five minutes!
+            link_text: See alert in Prometheus
+            link_url: http://localhost:9090/alerts
+            webhook_url: https://hooks.slack.com/services/123/456/789
