@@ -29,14 +29,13 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=webhook -n cert
 #### With chart repo locally
 
 ```sh
-helm upgrade --install mdai ../mdai-helm-chart \
+helm upgrade --install mdai ../mdai-hub \
   --repo https://charts.mydecisive.ai \
   --namespace mdai \
   --create-namespace \
   --wait-for-jobs \
   --set mdai-s3-logs-reader.enabled=false \
-  -f ../mdai-helm-chart/values.yaml
-  --cleanup-on-fail
+  -f ../mdai-hub/values.yaml
 ```
 
 <details>
