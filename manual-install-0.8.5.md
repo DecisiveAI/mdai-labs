@@ -11,15 +11,7 @@ kind create cluster -n mdai
 ## Step 2. Install `cert-manager`
 
 ```sh
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml --timeout=60s >/dev/null 2>&1 || echo "⚠️ cert-manager: unable to deploy"
-
-kubectl wait --for=condition=Established crd/certificates.cert-manager.io --timeout=60s >/dev/null 2>&1 || echo "⚠️ cert-manager CRD not available"
-
-kubectl wait --for=condition=Available deploy -l app.kubernetes.io/name=cert-manager -n cert-manager --timeout=180s >/dev/null 2>&1 || echo "⚠️ cert-manager deployments not available"
-
-kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=cert-manager -n cert-manager --timeout=180s >/dev/null 2>&1 || echo "⚠️ cert-manager pods not ready"
-
-kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=webhook -n cert-manager --timeout=120s >/dev/null 2>&1 || echo "⚠️ cert-manager webhook not ready"
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
 ```
 
 ## Step 3. Install MDAI dependencies via Helm chart
@@ -34,6 +26,7 @@ helm upgrade --install mdai ../mdai-hub \
   --namespace mdai \
   --create-namespace \
   --wait-for-jobs \
+  --cleanup-on-fail \
   --set mdai-s3-logs-reader.enabled=false \
   -f ../mdai-hub/values.yaml
 ```
@@ -51,7 +44,7 @@ helm upgrade --install mdai mdai-hub \
   --set mdai-operator.manager.env.otelSdkDisabled=true \
   --set mdai-gateway.otelSdkDisabled=true \
   --set mdai-s3-logs-reader.enabled=false \
-  --cleanup-on-fail >/dev/null 2>&1 || echo "⚠️ mdai: unable to install helm chart"
+  --cleanup-on-fail
 ```
 
 </details>

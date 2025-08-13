@@ -77,8 +77,16 @@ create_cluster() {
     --set mdai-gateway.otelSdkDisabled=true \
     --set mdai-s3-logs-reader.enabled=false \
     --cleanup-on-fail >/dev/null 2>&1 || echo "⚠️ mdai: unable to install helm chart"
-  echo "✅ MDAI cluster installed!"
+  echo "✅ MDAI dependencies installed!"
 
+  echo "⏳ Waiting for mdai-operator to be ready..."
+  kubectl wait --for=condition=Ready pod \
+      -l app.kubernetes.io/name=mdai-operator \
+      -n mdai \
+      --timeout=120s >/dev/null 2>&1 || echo "⚠️ mdai-operator webhook not ready"
+
+  kubectl wait --for=condition=Ready pods --all -n mdai --timeout=180s
+  echo "✅ MDAI cluster installed!"
 }
 
 upgrade_mdai() {
