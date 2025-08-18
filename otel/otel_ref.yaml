@@ -2,7 +2,7 @@ apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   labels:
-    mdaihub-name: mdaihub-sample
+    mydecisive.ai/hub-name: mdaihub-sample
   name: gateway
   namespace: mdai
 spec:
@@ -80,16 +80,24 @@ spec:
     exporters:
       debug: { }
       otlp/observer:
-        endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
+        endpoint: sample-mdai-observer-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
 
     service:
-      telemetry:
-        resource:
-          mdai-logstream: collector
-        metrics:
-          address: ":8888"
+#      telemetry:
+#        metrics:
+#          level: detailed
+#          address: 0.0.0.0:8888
+#      telemetry:
+#        metrics:
+#          level: detailed
+#          readers:
+#            - pull:
+#                exporter:
+#                  prometheus:
+#                    host: 0.0.0.0
+#                    port: 8888
       extensions:
         - health_check
       pipelines:

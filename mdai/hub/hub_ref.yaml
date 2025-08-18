@@ -8,6 +8,11 @@ metadata:
   namespace: mdai
 spec:
   variables:
+    - key: manual_filter
+      type: manual
+      dataType: string
+      serializeAs:
+        - name: "MANUAL_FILTER"
     - key: service_list
       serializeAs:
         - name: "SERVICE_LIST_REGEX"
@@ -57,15 +62,25 @@ spec:
       keep_firing_for: 10m
 
   automations:
-    - eventRef: top_talkers
-      workflow:
-        - handlerRef: HandleNoisyServiceAlert
-          args:
-            payload_val_ref: mdai_service
-            variable_ref: service_list
-    - eventRef: top_team_talkers
-      workflow:
-        - handlerRef: HandleNoisyServiceAlert
-          args:
-            payload_val_ref: team
-            variable_ref: team_list
+    - name: top_talkers
+      when:
+        alertName: top_talkers
+        status: firing
+      then:
+        - addToSet:
+            set: service_list
+            value: "{{ service_name }}"
+        - callWebhook:
+            url: "https://alerts.company.com/webhook"
+            method: POST
+            body:
+              service: "{{ service_name }}"
+              error_rate: "{{ error_rate }}"
+    - name: top_team_talkers
+      when:
+        alertName: top_team_talkers
+        status: resolved
+      then:
+        - removeFromSet:
+            set: service_list
+            value: "{{ service_name }}"
