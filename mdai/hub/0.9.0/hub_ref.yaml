@@ -8,6 +8,11 @@ metadata:
   namespace: mdai
 spec:
   variables:
+    - key: manual_filter
+      type: manual
+      dataType: string
+      serializeAs:
+        - name: "MANUAL_FILTER"
     - key: service_list
       serializeAs:
         - name: "SERVICE_LIST_REGEX"
