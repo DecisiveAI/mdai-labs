@@ -8,7 +8,7 @@ metadata:
 spec:
   managementState: managed
   image: otel/opentelemetry-collector-contrib:0.118.0
-  replicas: 5
+  replicas: 1
   resources:
     limits:
       memory: "256Mi"
