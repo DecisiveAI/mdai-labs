@@ -1,0 +1,42 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiObserver
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: sample
+  namespace: mdai
+spec:
+  observers:
+    - name: observer-in
+      labelResourceAttributes:
+        - mdai_service
+      countMetricName: items_received_by_service_total
+      bytesMetricName: bytes_received_by_service_total
+      filter:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["observer_direction"] != "received"'
+    - name: observer-out
+      labelResourceAttributes:
+        - mdai_service
+      countMetricName: items_sent_by_service_total
+      bytesMetricName: bytes_sent_by_service_total
+      filter:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["observer_direction"] != "exported"'
+
+  observerResource:
+    image: public.ecr.aws/decisiveai/observer-collector:0.1
+    ownLogsOtlpEndpoint: hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
+    replicas: 2
+    resources:
+      limits:
+        memory: "512Mi"
+        cpu: "200m"
+      requests:
+        memory: "128Mi"
+        cpu: "100m"

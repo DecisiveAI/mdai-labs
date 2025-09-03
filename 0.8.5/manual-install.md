@@ -14,31 +14,33 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/do
 
 ## Step 3. Install MDAI dependencies via Helm chart
 
-**Install MDAI Collector**
-
-#### With chart repo locally
-
-```sh
-helm upgrade --install mdai ../mdai-hub \
-  --repo https://charts.mydecisive.ai \
-  --namespace mdai \
-  --create-namespace \
-  --wait-for-jobs \
-  --cleanup-on-fail \
-  --set mdai-s3-logs-reader.enabled=false \
-  -f ../mdai-hub/values.yaml
-```
+**Install MDAI Collector w/ cert-manager**
 
 <details>
-
-<summary>From remote</summary>
-
 ```sh
 helm upgrade --install mdai mdai-hub \
   --repo https://charts.mydecisive.ai \
   --namespace mdai \
   --create-namespace \
   --version v0.8.5-dev \
+  --set mdai-operator.manager.env.otelSdkDisabled=true \
+  --set mdai-gateway.otelSdkDisabled=true \
+  --set mdai-s3-logs-reader.enabled=false \
+  --cleanup-on-fail
+```
+
+</details>
+
+**Install MDAI Collector w/o cert-manager**
+
+<details>
+
+```sh
+helm upgrade --install mdai mdai-hub \
+  --repo https://charts.mydecisive.ai \
+  --namespace mdai \
+  --create-namespace \
+  --version v0.8.6-dev \
   --set mdai-operator.manager.env.otelSdkDisabled=true \
   --set mdai-gateway.otelSdkDisabled=true \
   --set mdai-s3-logs-reader.enabled=false \

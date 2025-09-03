@@ -5,7 +5,7 @@ KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-mdai}"
 NAMESPACE="${NAMESPACE:-mdai}"
 HELM_REPO_URL="https://charts.mydecisive.ai"
 HELM_CHART_NAME="mdai-hub"
-HELM_CHART_VERSION="${HELM_CHART_VERSION:-v0.x.x}"
+HELM_CHART_VERSION="${HELM_CHART_VERSION:-v0.8.0-dev}"
 CERT_MANAGER_URL="https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
 
 ensure_command() {
@@ -17,7 +17,6 @@ ensure_command() {
 
 create_cluster() {
   echo "🧪 MDAI Quickstart: Local Kind cluster setup with Helm install"
-
   ensure_command docker
   ensure_command kind
   ensure_command kubectl
@@ -36,36 +35,13 @@ create_cluster() {
   fi
 
   echo "🔐 Installing Cert‑Manager..."
-
-  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml \
-    --timeout=60s >/dev/null 2>&1 || echo "⚠️ cert-manager: unable to deploy"
-
-  echo "⏳ Waiting for cert-manager CRD to become available..."
-
-  kubectl wait --for=condition=Established crd/certificates.cert-manager.io \
-    --timeout=60s >/dev/null 2>&1 || echo "⚠️ cert-manager CRD not available"
-
-
-  echo "⏳ Waiting for cert-manager deployment to become available..."
-
-  kubectl wait --for=condition=Available deploy \
-    -l app.kubernetes.io/name=cert-manager \
-    -n cert-manager \
-    --timeout=180s >/dev/null 2>&1 || echo "⚠️ cert-manager deployments not available"
-
-  echo "⏳ Waiting for cert-manager pods to be ready..."
-
-  # Wait for all cert-manager pods to be created
-  kubectl wait --for=condition=Ready pod \
-    -l app.kubernetes.io/name=cert-manager \
-    -n cert-manager \
-    --timeout=180s >/dev/null 2>&1 || echo "⚠️ cert-manager pods not ready"
+  kubectl apply -f "${CERT_MANAGER_URL}" > /dev/null
 
   echo "⏳ Waiting for cert-manager webhook to be ready..."
-  kubectl wait --for=condition=Ready pod \
-      -l app.kubernetes.io/name=webhook \
-      -n cert-manager \
-      --timeout=120s >/dev/null 2>&1 || echo "⚠️ cert-manager webhook not ready"
+  kubectl wait deployment cert-manager-webhook \
+    --namespace cert-manager \
+    --for=condition=Available=True \
+    --timeout=120s > /dev/null
 
   echo "🚀 Installing MDAI Helm chart '${HELM_CHART_NAME}'..."
   helm upgrade --install mdai "${HELM_CHART_NAME}" \
@@ -73,19 +49,8 @@ create_cluster() {
     --namespace "${NAMESPACE}" \
     --create-namespace \
     --version "${HELM_CHART_VERSION}" \
-    --set mdai-operator.manager.env.otelSdkDisabled=true \
-    --set mdai-gateway.otelSdkDisabled=true \
-    --set mdai-s3-logs-reader.enabled=false \
-    --cleanup-on-fail >/dev/null 2>&1 || echo "⚠️ mdai: unable to install helm chart"
-  echo "✅ MDAI dependencies installed!"
+    --cleanup-on-fail >/dev/null 2>&1
 
-  echo "⏳ Waiting for mdai-operator to be ready..."
-  kubectl wait --for=condition=Ready pod \
-      -l app.kubernetes.io/name=mdai-operator \
-      -n mdai \
-      --timeout=120s >/dev/null 2>&1 || echo "⚠️ mdai-operator webhook not ready"
-
-  kubectl wait --for=condition=Ready pods --all -n mdai --timeout=180s
   echo "✅ MDAI cluster installed!"
 }
 
@@ -183,12 +148,13 @@ clean_configs() {
     return
   fi
 
+
   kubectl delete -f ./synthetics/loggen_service_xtra_noisy.yaml -n "${NAMESPACE}"
   kubectl delete -f ./synthetics/loggen_service_noisy.yaml -n "${NAMESPACE}"
   kubectl delete -f ./synthetics/loggen_services.yaml -n "${NAMESPACE}"
-  kubectl delete -f ./otel/otel_ref.yaml -n "${NAMESPACE}"
-  kubectl delete -f ./mdai/hub/hub_ref.yaml -n "${NAMESPACE}"
-  helm uninstall -n default fluent
+  kubectl delete -f ./otel/0.8/otel_ref.yaml -n "${NAMESPACE}"
+  kubectl delete -f ./mdai/hub/0.8/hub_ref.yaml -n "${NAMESPACE}"
+  helm uninstall fluentd
 
   echo "✅ Namespace '${NAMESPACE}' cleaned (resources deleted, namespace remains)"
 }

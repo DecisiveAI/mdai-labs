@@ -10,21 +10,21 @@ If you'd like to setup  [Manual Installation](manual-install.md)
 
 Run the following to make our install/uninstall script executable.
 ```
-chmod +x mdai-kind.sh
+chmod +x ./cli/mdai.sh
 ```
 
 You can use the following commands to setup and install your mdai instance locally...
 
 ```
-./mdai-kind.sh install
+./cli/mdai.sh install
 
-./mdai-kind.sh logs
+./cli/mdai.sh logs
 
-./mdai-kind.sh hub
+./cli/mdai.sh hub
 
-./mdai-kind.sh collector
+./cli/mdai.sh collector
 
-./mdai-kind.sh fluentd
+./cli/mdai.sh fluentd
 ```
 
 ### Available commands
@@ -33,24 +33,24 @@ You can use the following commands to setup and install your mdai instance local
 
 | Action                          | Command                      | Description                                   |
 |---------------------------------|------------------------------|-----------------------------------------------|
-| Install Cluster                 | `./mdai-kind.sh install`    | Installs the MDAI cluster                      |
-| Delete Cluster                  | `./mdai-kind.sh delete`     | Deletes the MDAI cluster                       |
-| Uninstalls config deployments   | `./mdai-kind.sh clean`  | Deletes all resources in the `mdai` namespace |
+| Install Cluster                 | `./cli/mdai.sh install`      | Installs the MDAI cluster                     |
+| Delete Cluster                  | `./cli/mdai.sh delete`       | Deletes the MDAI cluster                      |
+| Uninstalls config deployments   | `./cli/mdai.sh clean`        | Deletes all resources in the `mdai` namespace |
 
 #### 📈 Data generators
 
 | Action                          | Command                         | Description                                                   |
 |---------------------------------|---------------------------------|---------------------------------------------------------------|
-| Deploy Log Generators           | `./mdai-kind.sh logs`           | Deploys synthetic noisy and normal log services               |
+| Deploy Log Generators           | `./cli/mdai.sh logs`            | Deploys synthetic noisy and normal log services               |
 
 
 #### 🐙 MDAI Commands
 
 | Action                          | Command                         | Description                                                   |
 |---------------------------------|---------------------------------|---------------------------------------------------------------|
-| Install MDAI Smart Hub          | `./mdai-kind.sh hub`            | Applies the MDAI Smart Telemetry Hub manifest                 |
-| Install Collector               | `./mdai-kind.sh collector`      | Applies the OpenTelemetry Collector manifest                  |
-| Forward Logs to MDAI via Fluentd| `./mdai-kind.sh fluentd`        | Installs Fluentd Helm chart with log forwarding config        |
+| Install MDAI Smart Hub          | `./cli/mdai.sh hub`             | Applies the MDAI Smart Telemetry Hub manifest                 |
+| Install Collector               | `./cli/mdai.sh collector`       | Applies the OpenTelemetry Collector manifest                  |
+| Forward Logs to MDAI via Fluentd| `./cli/mdai.sh fluentd`         | Installs Fluentd Helm chart with log forwarding config        |
 
 ### What do to after automated install?
 

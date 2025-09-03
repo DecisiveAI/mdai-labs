@@ -1,0 +1,84 @@
+apiVersion: mydecisive.ai/v1
+kind: MyDecisiveEngine
+metadata:
+  labels:
+    app.kubernetes.io/name: mydecisiveengine
+    app.kubernetes.io/instance: mydecisiveengine-sample
+    app.kubernetes.io/part-of: mydecisive-engine-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: mydecisive-engine-operator
+  name: mydecisiveengine-sample-ingress
+spec:
+  telemetryModule:
+    attributes:
+      name: "telemetry"
+      version: "0.0.1"
+    collectors:
+      -
+        name: "gateway"
+        enabled: true
+        annotations:
+          some.global.mdai.annotation: some-global-mdai-annotation-value
+        spec:
+          ingress:
+            annotations:
+              alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:${AWS_REGION}:${AWS_ACCOUNT_ID}:certificate/${AWS_CERT_ID}'
+              alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+              alb.ingress.kubernetes.io/load-balancer-name: mdai-grpc-endpoint
+              alb.ingress.kubernetes.io/backend-protocol-version: GRPC
+              alb.ingress.kubernetes.io/scheme: internal
+              alb.ingress.kubernetes.io/target-type: ip
+              kubernetes.io/ingress.class: alb
+            grpcService:
+              type: NodePort
+              some.grpc.service.annotation: some-grpc-service-annotation-value
+            nonGrpcService:
+              type: LoadBalancer
+              annotations:
+                service.beta.kubernetes.io/aws-load-balancer-name: mdai-non-grpc-endpoint
+                service.beta.kubernetes.io/aws-load-balancer-type: external
+                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+                service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+                service.beta.kubernetes.io/aws-load-balancer-ssl-cert: 'arn:aws:acm:${AWS_REGION}:${AWS_ACCOUNT}:certificate/${AWS_CERT_ARN}'
+            type: aws
+            collectorEndpoints:
+              otlp: otlp.mdai.io
+          volumeMounts:
+            - name: logs-storage
+              mountPath: /var/logs
+          volumes:
+            - name: logs-storage
+              emptyDir: { }
+          config:
+            receivers:
+              otlp:
+                protocols:
+                  grpc:
+                    endpoint: "0.0.0.0:4317"
+                  http:
+                    endpoint: "0.0.0.0:4318"
+            processors:
+              resource:
+                attributes:
+                - key: service.instance.id
+                  from_attribute: k8s.pod.uid
+                  action: insert
+            exporters:
+              debug:
+                verbosity: detailed
+                sampling_initial: 2
+                sampling_thereafter: 100
+            service:
+              pipelines:
+                traces:
+                  receivers: [otlp]
+                  processors: [resource]
+                  exporters: [debug]
+                metrics:
+                  receivers: [otlp]
+                  processors: [resource]
+                  exporters: [debug]
+                logs:
+                  receivers: [otlp]
+                  processors: [resource]
+                  exporters: [debug]
