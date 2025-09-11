@@ -1,7 +1,5 @@
 # Manual Installation
 
-> Requires using [this branch](https://github.com/DecisiveAI/mdai-labs/tree/rlaw/ENG-564-error-log-alerting) of the mdai-hub
-
 ## Step 1. Create kind cluster
 
 ```sh
