@@ -18,7 +18,7 @@ spec:
       cpu: "100m"
   envFrom:
     - configMapRef:
-        name: mdaihub-sample-automation
+        name: mdaihub-sample-variables
   config:
     receivers:
       fluentforward:
@@ -83,7 +83,7 @@ spec:
       #   error_mode: ignore
       #   logs:
       #     log_record:
-      #       - '${env:SERVICE_LIST_REGEX}" != "" and IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
+      #       - '"${env:SERVICE_LIST_REGEX}" != "" and IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
 
       
       transform/severity:
