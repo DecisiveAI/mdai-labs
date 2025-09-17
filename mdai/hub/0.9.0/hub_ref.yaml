@@ -98,7 +98,7 @@ spec:
       then:
         - removeFromSet:
             set: service_list
-            value: "mdai_service"
+            value: ${trigger:payload.labels.mdai_service}
     - name: top_talkers_firing
       when:
         alertName: top_talkers
@@ -106,7 +106,7 @@ spec:
       then:
         - addToSet:
             set: service_list
-            value: "mdai_service"
+            value: ${trigger:payload.labels.mdai_service}
         - setVariable:
             scalar: alerting_data_type
             value: ${trigger:payload.labels.data_type}
