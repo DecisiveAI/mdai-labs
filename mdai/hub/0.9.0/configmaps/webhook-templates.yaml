@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webhook-templates
+  namespace: mdai
+data:
+  github-workflow.json: |
+    {
+      "ref":   "${template:ref:-main}",
+      "inputs": {
+        "env":      "${template:env:-dev}",
+        "build_id": "${trigger:id}"
+      }
+    }
+  generic.json: |
+    {
+      "message": "${template:message:-MDAI event}",
+      "hub":     "${trigger:hub_name}",
+      "corr":    "${trigger:correlation_id}",
+      "raw":     "${trigger:payload}"
+    }
