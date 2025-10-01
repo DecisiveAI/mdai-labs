@@ -5,7 +5,7 @@ KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-mdai}"
 NAMESPACE="${NAMESPACE:-mdai}"
 HELM_REPO_URL="https://charts.mydecisive.ai"
 HELM_CHART_NAME="mdai-hub"
-HELM_CHART_VERSION="${HELM_CHART_VERSION:-v0.8.0-rc3}"
+HELM_CHART_VERSION="${HELM_CHART_VERSION:-v0.8.5-dev}"
 CERT_MANAGER_URL="https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
 
 ensure_command() {
