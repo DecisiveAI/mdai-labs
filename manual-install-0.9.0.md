@@ -71,9 +71,6 @@ kubectl apply -f ./synthetics/loggen_services.yaml
 ```
 
 ## Step 5: Create + Install MDAI Hub
-
-> Get your Slack wehbook URL and update the `hub_ref.yaml` [here](https://github.com/DecisiveAI/mdai-labs/blob/00b05e9589d53b6cfac3361c4605b38f41b702a3/mdai/hub/0.8.5/hub_ref.yaml#L88-L109) to receive Slack messages. Follow [this guide](https://api.slack.com/messaging/webhooks) to get a webhook URL.
-
 ```sh
 kubectl apply -f ./mdai/hub/0.9.0/hub_ref.yaml -n mdai
 ```
@@ -126,7 +123,8 @@ Some examples of webhook action templates: `mdai/hub/0.9.0/configmaps/webhook-te
 * `kubectl` is pointed at the correct cluster/namespace.
 * Any Secrets referenced by actions must live in the same namespace as the Hub CR.
 ### Slack webhook setup
-Slack incoming webhooks require a single URL. For security, store it in a Secret and reference it from the action.  
+Get your Slack wehbook URL. Follow [this guide](https://api.slack.com/messaging/webhooks) to get a webhook URL.  
+For security, store it in a Secret and reference it from the action.  
 #### 1) Create the Secret (replace the URL):
 ```shell
 kubectl -n mdai create secret generic slack-webhook-secret \
