@@ -131,8 +131,11 @@ kubectl -n mdai create secret generic slack-webhook-secret \
   --from-literal=url='https://hooks.slack.com/services/XXXXXXXXXXXXXXXXXXXXXXXX'
 ```
 #### 2) Reference it from your Hub CR action:
-Use built-in slack template. Use examples from [hub_ref_webhook_actions.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/hub_ref_webhook_actions.yaml#L137-L181)
-
+Use examples from [hub_ref_webhook_actions.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/hub_ref_webhook_actions.yaml#L137-L181) to add an action with built-in slack template to your hub custom resource `hub_ref.yaml`.   
+Re-apply your updated hub custom resource.
+```sh
+kubectl apply -f ./mdai/hub/0.9.0/hub_ref.yaml -n mdai
+```
 ### GitHub Action trigger (workflow_dispatch)
 You can trigger a repository workflow that supports workflow_dispatch.   
 #### 1) Example workflow in your repo (e.g., .github/workflows/deploy.yml):
@@ -155,16 +158,24 @@ jobs:
     steps:
       - run: echo "env=${{ github.event.inputs.env }} build_id=${{ github.event.inputs.build_id }}"
 ```
-#### 2) Action in your Hub CR to call GitHub’s dispatch API:
-Use examples from [hub_ref_webhook_actions.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/hub_ref_webhook_actions.yaml#L182-L206)   
-Templates referenced in examples could be found at [webhook-templates.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/configmaps/webhook-templates.yaml)
-#### 3) Create a GitHub token and Secret
+#### 2) Create a GitHub token and Secret
 * Use a fine-grained PAT (or classic PAT) with Read and Write access to Actions for the target repo.
 * Store it as a bearer value in a Secret (same namespace as the Hub CR):
 ```shell
 kubectl -n mdai create secret generic github-token \
   --from-literal=authorization="Bearer github_pat_********_*********"
 ```
+#### 3) Add action to your Hub CR to call GitHub’s dispatch API:
+* Use examples from [hub_ref_webhook_actions.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/hub_ref_webhook_actions.yaml#L182-L206) to add an action which will trigger your GitHub webhook to your hub custom resource `hub_ref.yaml`.   
+* Update `OWNER/REPO` in repo URL with the one you created:
+`url: { value: https://api.github.com/repos/OWNER/REPO/actions/workflows/deploy.yml/dispatches }`   
+* Re-apply your updated hub custom resource.
+```sh
+kubectl apply -f ./mdai/hub/0.9.0/hub_ref.yaml -n mdai
+```
+Additional template examples could be found at [webhook-templates.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/configmaps/webhook-templates.yaml)
+
+
 ### Validation & best practices
 •	URL must be an absolute http(s) URL (whether provided inline via url.value or indirectly via urlFrom.secretKeyRef).  
 •	HTTP method must be one of the allowed values (use POST when payloadTemplate is present).  
