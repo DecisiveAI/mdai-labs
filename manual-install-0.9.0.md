@@ -107,10 +107,13 @@ Jump to our docs to see how to use mdai to:
 1. [setup dashboards for mdai monitoring](https://docs.mydecisive.ai/quickstart/dashboard/index.html)
 2. [automate dynamic filtration](https://docs.mydecisive.ai/quickstart/filter/index.html)
 
-## Appendix 1: how to make error conditions happen for testing
+## Appendix 1: How to make error conditions happen for testing
 
-* The `anomalous_error_rate` prometheus alert currently requires at least an hour's worth of data to trigger. Swap in [this version](https://github.com/DecisiveAI/mdai-labs/blob/e5c0309ad478cdd441c7463def5b0a9390cbb40b/mdai/hub/0.8.5/hub_ref.yaml#L66-L73) to guarantee alerts trigger that should call the webhook.
-
+The `anomalous_error_rate` prometheus alert currently requires at least an hour's worth of data to trigger.   
+To test it sooner, temporarily replace the expression in [hub_ref.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/hub_ref.yaml#L75) with the lower-threshold expression below:
+```yaml
+expr: 'sum(increase(error_logs_by_service_total[5m])) by (mdai_service) > 0.1 * sum(avg_over_time(increase(error_logs_by_service_total[5m])[1h:])) by (mdai_service)'
+```
 ## Appendix 2: How to set up webhook actions
 This appendix shows two common webhook patterns for MDAI Hub actions:
 1.	sending a message to Slack, and
@@ -130,7 +133,7 @@ kubectl -n mdai create secret generic slack-webhook-secret \
   --from-literal=url='https://hooks.slack.com/services/XXXXXXXXXXXXXXXXXXXXXXXX'
 ```
 #### 2) Reference it from your Hub CR action:
-Use built-in slack template. Use examples from `mdai/hub/0.9.0/hub_ref_webhook_actions.yaml`
+Use built-in slack template. Use examples from [hub_ref_webhook_actions.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/hub_ref_webhook_actions.yaml#L137-L181)
 
 ### GitHub Action trigger (workflow_dispatch)
 You can trigger a repository workflow that supports workflow_dispatch.   
@@ -155,8 +158,8 @@ jobs:
       - run: echo "env=${{ github.event.inputs.env }} build_id=${{ github.event.inputs.build_id }}"
 ```
 #### 2) Action in your Hub CR to call GitHub’s dispatch API:
-Use examples from `mdai/hub/0.9.0/hub_ref_webhook_actions.yaml`
-Templates referenced in examples could be found `mdai/hub/0.9.0/configmaps/webhook-templates.yaml`
+Use examples from [hub_ref_webhook_actions.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/hub_ref_webhook_actions.yaml#L182-L206)   
+Templates referenced in examples could be found at [webhook-templates.yaml](https://github.com/DecisiveAI/mdai-labs/blob/01701c6b71f9ab478bec0157406f1cb520d8d54d/mdai/hub/0.9.0/configmaps/webhook-templates.yaml)
 #### 3) Create a GitHub token and Secret
 * Use a fine-grained PAT (or classic PAT) with Read and Write access to Actions for the target repo.
 * Store it as a bearer value in a Secret (same namespace as the Hub CR):
