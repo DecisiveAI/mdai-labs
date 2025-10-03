@@ -1,0 +1,67 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: trace-balancer
+  namespace: mdai
+spec:
+  serviceAccount: loadbalancer
+  image: otel/opentelemetry-collector-contrib:0.122.0
+  replicas: 1
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+  config:
+    receivers:
+      datadog:
+        endpoint: 0.0.0.0:8126
+        read_timeout: 60s
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    processors:
+      deltatocumulative: { }
+      batch:
+        send_batch_size: 5000
+        timeout: 10s
+
+    exporters:
+      loadbalancing:
+        protocol:
+          otlp:
+            compression: gzip
+            tls:
+              insecure: true
+        resolver:
+          k8s:
+            service: gateway-collector-headless.mdai
+      prometheus:
+        endpoint: 0.0.0.0:8899
+        metric_expiration: 180m
+        resource_to_telemetry_conversion:
+          enabled: true
+
+    connectors:
+      count/service:
+        spans:
+          trace.service.count:
+            description: Trace count by service.
+            conditions:
+              - 'IsRootSpan()'
+    service:
+      extensions: [ health_check ]
+
+      pipelines:
+        traces:
+          receivers: [ datadog ]
+          processors: [ batch ]
+          exporters: [ loadbalancing, count/service ]
+        metrics:
+          receivers: [ count/service ]
+          processors: [ deltatocumulative ]
+          exporters: [ prometheus ]

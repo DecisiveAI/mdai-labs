@@ -194,7 +194,7 @@ compute_order() {
       [[ -n "$norm" ]] && ORDER+=("$norm")
     done
   fi
-  if (( ${#ORDER[@]:-0} == 0 )); then
+  if [ ${#ORDER[@]} -eq 0 ]; then
     ORDER=(synopsis globals commands defaults examples)
   fi
   # Dedup

@@ -620,7 +620,7 @@ cmd_report() {
 
 # Defaults to ./mdai-usage-gen.sh, but you can override with MDAI_USAGE_GEN=/path/to/script
 cmd_gen_usage_external() {
-  local GEN="${MDAI_USAGE_GEN:-./mdai-usage-gen.sh}"
+  local GEN="${MDAI_USAGE_GEN:-./cli/mdai-usage-gen.sh}"
 
   if [[ ! -f "$GEN" ]]; then
     err "Generator not found: $GEN"
@@ -995,31 +995,53 @@ GLOBAL FLAGS:
   -h, --help                 Show help
 
 COMMANDS:
-  install_deps                 Create/ensure Kind cluster w/ minimal dependencies
-  install_mdai [--version VER] [--values FILE] [--set k=v] [--resources [PREFIX]] [--no-cert-manager]
-                               Install/upgrade the MDAI helm release and wait for readiness
-  install                      (alias) Runs: install_deps then install_mdai
-  upgrade                      Helm upgrade/install MDAI only
-  apply FILE                   kubectl apply -f FILE -n $NAMESPACE
-  delete_file FILE             kubectl delete -f FILE -n $NAMESPACE
-  hub [--file FILE]            Apply Hub manifest (default: ./mdai/hub/hub_ref.yaml)
-  collector [--file FILE]      Apply OTel collector manifest (default: ./otel/otel_ref.yaml)
-  logs                         Deploy synthetic log generators
-  fluentd [--values FILE]      Install Fluentd with values
-  aws_secret [--script FILE]   Apply AWS secret-from-env script
-  mdai_monitor [--file FILE]   Apply monitor manifest
-  compliance [--version VER] [--delete] [--otel FILE --hub FILE]
-                               Apply or delete the compliance bundle
-  df [--version VER] [--delete] [--otel FILE --hub FILE]
-                               Apply or delete the dynamic filtration bundle
-  pii [--version VER] [--delete] [--otel FILE --hub FILE]
-                               Apply or delete the PII bundle
-  clean                        Remove common resources (keeps namespace)
-  delete                       Delete the Kind cluster
+
+INSTALL / UPGRADE
+  install                        Create Kind deps then install MDAI (alias: install_deps + install_mdai)
+  install_deps                   Prepare Kind cluster + dependencies
+  install_mdai                   Helm install/upgrade + wait
+                                 [--version VER] [--values FILE] [--set k=v] [--resources [PREFIX]] [--no-cert-manager]
+  upgrade                        Helm upgrade/install only
+
+COMPONENTS
+  hub [--file FILE]              Apply Hub manifest (default: ./mdai/hub/hub_ref.yaml)
+  collector [--file FILE]        Apply OTel Collector (default: ./otel/otel_ref.yaml)
+  fluentd [--values FILE]        Install Fluentd with values
+  mdai_monitor [--file FILE]     Apply Monitor manifest
+  aws_secret [--script FILE]     Create Kubernetes secret from env script
+
+DATA GENERATION
+  datagen [--apply FILE ...]     Apply custom generator YAMLs (falls back to built-in synthetics)
+  logs                           Alias for 'datagen'
+
+USE-CASES
+  use-case <pii|compliance|tail-sampling>
+           [--version VER] [--hub PATH] [--otel PATH] [--apply FILE ...]
+                                 Apply a named bundle. If --hub/--otel not given, resolves:
+                                 ./use-cases/<case>[/<version>]/{hub.yaml,otel.yaml}
+                                 Extras can be added with repeatable --apply.
+                                 Examples:
+                                   use-case compliance --version 0.8.6
+                                   use-case pii --hub ./use-cases/pii/0.8.6/hub.yaml --otel ./use-cases/pii/0.8.6/otel.yaml
+
+KUBECTL HELPERS
+  apply FILE                     kubectl apply -f FILE -n $NAMESPACE
+  delete_file FILE               kubectl delete -f FILE -n $NAMESPACE
+
+MAINTENANCE
+  clean                          Remove common resources (keeps namespace)
+  delete                         Delete the Kind cluster
+
+REPORTING / DOCS
   report [--format table|json|yaml] [--out FILE]
-                               Build report of what’s installed
+                                 Show what’s installed
   gen-usage [--out FILE] [--examples FILE] [--section "..."]
-                               Generate usage.md using an external generator
+                                 Generate usage.md
+
+DEPRECATED (prefer `use-case`)
+  compliance [--version VER] [--delete] [--otel FILE --hub FILE]
+  df         [--version VER] [--delete] [--otel FILE --hub FILE]
+  pii        [--version VER] [--delete] [--otel FILE --hub FILE]
 
 For a full, nicely formatted guide, run:
   ./mdai.sh gen-usage --out ./docs/usage.md --examples ./cli/examples.md

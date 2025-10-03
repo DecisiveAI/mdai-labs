@@ -1,0 +1,26 @@
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
+metadata:
+  name: datadog
+spec:
+  override:
+    nodeAgent:
+      replicas: 2
+  features:
+    # the agent will receive OTEL trace data (for our test)
+    otlp:
+      receiver:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+            enabled: true
+  global:
+    env:
+      - name: DD_APM_DD_URL
+        value: "http://trace-balancer-collector.mdai:8126"
+    clusterName: mdai-test-cluster
+    registry: public.ecr.aws/datadog
+    site: ${env:DD_SITE_URL}
+    credentials:
+      apiKey: ${env:DD_API_KEY}
+
