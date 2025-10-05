@@ -1,0 +1,1347 @@
+{
+  "__inputs": [
+    {
+      "name": "PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    },
+    {
+      "name": "EXPRESSION",
+      "label": "Expression",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "__expr__"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "datasource",
+      "id": "__expr__",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "alertlist",
+      "name": "Alert list",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "barchart",
+      "name": "Bar chart",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.2.2+security-01"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "The MDAI Data Management dashboard shows the received and exported metrics for data running through MDAI, offering a high-level view of metrics for configured data being monitored and filtered via MDAI using MDAI Hub Custom Resource Configuration.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 9,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 18,
+      "panels": [],
+      "title": "Totals for I/O $dataType",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "default": true,
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Shows how many $groupByLabel monitored based on the current selected time interval.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#bb41ff",
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6d3b78",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.2.2+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "count(count by($groupByLabel) (rate($receiverMetric{data_type=\"$dataType\"}[$__rate_interval])))",
+          "format": "time_series",
+          "fullMetaSearch": false,
+          "includeNullMetadata": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "MDAI Total by $groupByLabel",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total ingress and egress $dataType filtered through MDAI operator.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 100,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [
+            {
+              "options": {
+                "Value #Received Total": {
+                  "index": 0,
+                  "text": "Received Total"
+                },
+                "Value #Sent Total": {
+                  "index": 1,
+                  "text": "Sent Total"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6d3b78",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 16,
+      "options": {
+        "barRadius": 0.5,
+        "barWidth": 0.9,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "xField": "Field",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 100
+      },
+      "pluginVersion": "11.2.2+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "sum(sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])))",
+          "format": "table",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "Received Total",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "sum(sum by($groupByLabel) (increase($exporterMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])))",
+          "format": "table",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "Sent Total",
+          "useBackend": false
+        }
+      ],
+      "title": "I/O $dataType",
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "labelsToFields": false,
+            "reducers": [
+              "sum"
+            ]
+          }
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Average percentage difference between ingress and egress $dataType.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "#6d3b78",
+                "value": null
+              },
+              {
+                "color": "#eabef3",
+                "value": 0
+              },
+              {
+                "color": "#e288f6",
+                "value": 10
+              },
+              {
+                "color": "#be5ad4",
+                "value": 20
+              },
+              {
+                "color": "#9e4db0",
+                "value": 30
+              },
+              {
+                "color": "#8d33a0",
+                "value": 40
+              },
+              {
+                "color": "#6d3b78",
+                "value": 50
+              },
+              {
+                "color": "#61306b",
+                "value": 60
+              },
+              {
+                "color": "#572961",
+                "value": 70
+              },
+              {
+                "color": "#481254",
+                "value": 80
+              },
+              {
+                "color": "#2f0837",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 17,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "11.2.2+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])) - sum(increase($exporterMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:]))",
+          "format": "table",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "Difference"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:]))",
+          "format": "table",
+          "hide": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "$Difference / $B",
+          "hide": true,
+          "refId": "A",
+          "type": "math"
+        },
+        {
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "$A * 100",
+          "hide": false,
+          "refId": "C",
+          "type": "math"
+        }
+      ],
+      "title": "Average Percentage Difference I/O",
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "includeTimeField": false,
+            "labelsToFields": false,
+            "mode": "seriesToRows",
+            "reducers": [
+              "mean"
+            ]
+          }
+        }
+      ],
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 13,
+      "panels": [],
+      "title": "$dataType",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total number of $dataType and size per service based on time interval for ingress and egress.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "": {
+                  "index": 0,
+                  "text": "Other"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 100
+              },
+              {
+                "color": "#EAB839",
+                "value": 10000
+              },
+              {
+                "color": "orange",
+                "value": 100000
+              },
+              {
+                "color": "red",
+                "value": 1000000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Receiver Bytes"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 500000
+                    },
+                    {
+                      "color": "red",
+                      "value": 10000000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sent Bytes"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 100000000
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1000000000
+                    },
+                    {
+                      "color": "orange",
+                      "value": 10000000000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Receiver Logs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "sishort"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sent Logs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "sishort"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 25,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": true
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Receiver Bytes"
+          }
+        ]
+      },
+      "pluginVersion": "11.2.2+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "label_replace(\n  sum by ($groupByLabel) (increase($receiverMetric{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",          \n  \"$groupByLabel\",\n  \"(.*)\"       \n)",
+          "format": "table",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "Receiver Logs",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "label_replace(\n  sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)",
+          "format": "table",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "Receiver Bytes",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "label_replace(\n  sum by($groupByLabel) (increase($exporterMetric{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)",
+          "format": "table",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "Sent Logs",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "label_replace(\n  sum by($groupByLabel) (increase($exporterMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)",
+          "format": "table",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "Sent Bytes",
+          "useBackend": false
+        }
+      ],
+      "title": "MDAI I/O by $groupByLabel",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "Value #A": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #B": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #C": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #D": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #Receiver Bytes": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #Receiver Logs": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #Sent Bytes": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #Sent Logs": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "service": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value #A (sum)": "Receiver Logs",
+              "Value #B (sum)": "Receiver Bytes",
+              "Value #C (sum)": "Sent Logs",
+              "Value #D (sum)": "Sent Bytes",
+              "Value #Receiver Bytes (sum)": "Receiver Bytes",
+              "Value #Receiver Logs (sum)": "Receiver Logs",
+              "Value #Sent Bytes (sum)": "Sent Bytes",
+              "Value #Sent Logs (sum)": "Sent Logs",
+              "service": "Services"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Receiver Bytes"
+              }
+            ]
+          }
+        },
+        {
+          "disabled": true,
+          "id": "limit",
+          "options": {
+            "limitField": "40"
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total number of $dataType from top talkers $groupByLabel ingested by MDAI",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 100000,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "received_top_talkers"
+            },
+            "properties": [
+              {
+                "id": "custom.axisColorMode",
+                "value": "text"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-purple",
+                  "mode": "continuous-RdYlGr"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "exported_matched"
+            },
+            "properties": [
+              {
+                "id": "custom.axisColorMode",
+                "value": "text"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-BlPu",
+                  "seriesBy": "last"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.2.2+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "topk(2, sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])))",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "received_top_talkers",
+          "useBackend": false
+        }
+      ],
+      "title": "Top Talkers Recieved $dataType Totals",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total number of $dataType from top talkers $groupByLabel sent to configured destinations",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 100000,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "exported_matched"
+            },
+            "properties": [
+              {
+                "id": "custom.axisColorMode",
+                "value": "text"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-BlPu",
+                  "seriesBy": "last"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.2.2+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "sum by($groupByLabel) (increase($exporterMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:]))\n  and on($groupByLabel)\ntopk(2, sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])))",
+          "format": "time_series",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "exported_matched",
+          "useBackend": false
+        }
+      ],
+      "title": "Top Talkers Sent $dataType Totals",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 19,
+      "panels": [],
+      "title": "Active Filters",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Current active filters for $dataType limiting egress of logs.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "id": 20,
+      "options": {
+        "alertInstanceLabelFilter": "",
+        "alertName": "",
+        "dashboardAlerts": false,
+        "groupBy": [
+          "mdai_service"
+        ],
+        "groupMode": "default",
+        "maxItems": 100,
+        "sortOrder": 1,
+        "stateFilter": {
+          "error": true,
+          "firing": true,
+          "noData": false,
+          "normal": false,
+          "pending": true
+        },
+        "viewMode": "list"
+      },
+      "pluginVersion": "11.2.2+security-01",
+      "title": "MDAI Active Filters for $dataType",
+      "type": "alertlist"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "mdai"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "items_received_by_service_total",
+          "value": "items_received_by_service_total"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Receiver Metric",
+        "multi": false,
+        "name": "receiverMetric",
+        "options": [],
+        "query": {
+          "qryType": 4,
+          "query": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "^(?!ALERTS|otelcol_).+",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "bytes_received_by_service_total",
+          "value": "bytes_received_by_service_total"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Receiver Metric by Bytes",
+        "multi": false,
+        "name": "receiverMetricByBytes",
+        "options": [],
+        "query": {
+          "qryType": 4,
+          "query": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "^(?!ALERTS|otelcol_).+",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "items_sent_by_service_total",
+          "value": "items_sent_by_service_total"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Exporter Metric",
+        "multi": false,
+        "name": "exporterMetric",
+        "options": [],
+        "query": {
+          "qryType": 4,
+          "query": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "^(?!ALERTS|otelcol_).+",
+        "skipUrlSync": false,
+        "sort": 2,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "bytes_sent_by_service_total",
+          "value": "bytes_sent_by_service_total"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Exporter Metric by Bytes",
+        "multi": false,
+        "name": "exporterMetricByBytes",
+        "options": [],
+        "query": {
+          "qryType": 4,
+          "query": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "^(?!ALERTS|otelcol_).+",
+        "skipUrlSync": false,
+        "sort": 2,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "logs",
+          "value": "logs"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Data Type",
+        "multi": false,
+        "name": "dataType",
+        "options": [
+          {
+            "selected": true,
+            "text": "logs",
+            "value": "logs"
+          },
+          {
+            "selected": false,
+            "text": "metrics",
+            "value": "metrics"
+          },
+          {
+            "selected": false,
+            "text": "traces",
+            "value": "traces"
+          }
+        ],
+        "query": "logs,metrics,traces",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "mdai_service",
+          "value": "mdai_service"
+        },
+        "hide": 0,
+        "label": "Group By Label",
+        "name": "groupByLabel",
+        "options": [
+          {
+            "selected": true,
+            "text": "mdai_service",
+            "value": "mdai_service"
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "MDAI Data Management",
+  "uid": "de978rcegwfswb",
+  "version": 1,
+  "weekStart": ""
+}

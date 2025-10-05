@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules-otelcol
+  namespace: mdai
+data:
+  otelcol-log-rules.yaml: |
+    groups:
+    - name: otelcol-logs
+      interval: 30s
+      rules:
+      - record: otelcol:logs_accepted_rpm
+        expr: sum(rate(otelcol_receiver_accepted_log_records_total[1m])) * 60
+      - record: otelcol:logs_exported_rpm
+        expr: sum(rate(otelcol_exporter_sent_log_records_total[1m])) * 60
+      - record: otelcol:logs_delivery_ratio
+        expr: otelcol:logs_exported_rpm / ignoring() otelcol:logs_accepted_rpm
+      - record: otelcol:logs_backlog_rpm
+        expr: otelcol:logs_accepted_rpm - otelcol:logs_exported_rpm
+---
+# Example patch fragment for your Prometheus Deployment/StatefulSet to mount the rules
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  template:
+    spec:
+      volumes:
+      - name: rules
+        configMap:
+          name: prometheus-rules-otelcol
+      containers:
+      - name: prometheus
+        volumeMounts:
+        - name: rules
+          mountPath: /etc/prometheus/rules
+          readOnly: true

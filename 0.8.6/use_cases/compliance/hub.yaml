@@ -7,3 +7,9 @@ metadata:
   name: mdaihub-compliance
   namespace: mdai
 spec:
+  variables:
+    - key: bucket
+      serializeAs:
+        - name: "BUCKET_NAME"
+      dataType: string
+      storageType: "mdai-valkey"

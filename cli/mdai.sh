@@ -121,12 +121,6 @@ apply_no_cert_manager_sets() {
   add_set "mdai-operator.admissionWebhooks.autoGenerateCert.enabled=true"
   add_set "mdai-operator.admissionWebhooks.autoGenerateCert.recreate=true"
   add_set "mdai-operator.admissionWebhooks.autoGenerateCert.certPeriodDays=365"
-
-  # These are already added by act_install_mdai_stack, so you can omit them here.
-  # Keeping them is harmless (duplicates of identical --set are OK).
-  # add_set "mdai-operator.manager.env.otelSdkDisabled=true"
-  # add_set "mdai-gateway.otelSdkDisabled=true"
-  # add_set "mdai-s3-logs-reader.enabled=false"
 }
 
 
@@ -333,9 +327,23 @@ act_wait_mdai_ready() {
 act_install_mdai_stack() {
   ns_ensure
   # Always-on defaults
-  add_set "mdai-operator.manager.env.otelSdkDisabled=true"
-  add_set "mdai-gateway.otelSdkDisabled=true"
-  add_set "mdai-s3-logs-reader.enabled=false"
+
+  # example: turn off the s3 log reader service
+  # add_set "mdai-s3-logs-reader.enabled=false"
+
+  # create/update the ConfigMap WITHOUT last-applied annotation
+  kubectl -n mdai create configmap mdai-grafana-dashboards \
+    --from-file=mdai-dashboard.json=files/dashboards/mdai-dashboard.json \
+    --from-file=mdai-resource-use.json=files/dashboards/mdai-resource-use.json \
+    --from-file=otel-collector.json=files/dashboards/otel-collector.json \
+    --from-file=mdai-cluster-usage.json=files/dashboards/mdai-cluster-usage.json \
+    --from-file=mdai-audit-streams.json=files/dashboards/mdai-audit-streams.json \
+    --from-file=controller-runtime-metrics.json=files/dashboards/controller-runtime-metrics.json \
+    --dry-run=client -o yaml \
+  | kubectl -n mdai apply --server-side -f -
+
+  kubectl -n mdai label configmap mdai-grafana-dashboards grafana_dashboard="1" --overwrite
+
   helm_install_or_upgrade_mdai
 }
 
@@ -655,11 +663,6 @@ cmd_install_deps() {
   act_check_tools_and_context
   act_create_or_reuse_kind
 
-  # by default add these overrides
-  add_set "mdai-operator.manager.env.otelSdkDisabled=true"
-  add_set "mdai-gateway.otelSdkDisabled=true"
-  add_set "mdai-s3-logs-reader.enabled=false"
-
   case "$INSTALL_CERT_MANAGER" in
     true|1|yes|on|TRUE|Yes|ON)
       info "cert-manager enabled (INSTALL_CERT_MANAGER=$INSTALL_CERT_MANAGER)"
@@ -688,6 +691,11 @@ cmd_install_mdai() {
   local maybe_prefix
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      -f)
+        shift
+        add_values "${1:?install_mdai: -f requires a file}"
+        shift
+        ;;
       --no-cert-manager)
         INSTALL_CERT_MANAGER=false
         shift
@@ -800,10 +808,10 @@ cmd_compliance() {
 
   # Preferred (versioned) layout:
   #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/otel.yaml
-  #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/mdaihub.yaml
+  #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/hub.yaml
   # Fallbacks:
   #   ./use_cases/compliance/otel.yaml
-  #   ./use_cases/compliance/mdaihub.yaml
+  #   ./use_cases/compliance/hub.yaml
   #   ${OTEL_PATH}/otel_compliance.yaml
   #   ${MDAI_PATH}/hub/hub_compliance.yaml
   if [[ -z "$otel_f" ]]; then
@@ -815,8 +823,8 @@ cmd_compliance() {
   fi
   if [[ -z "$hub_f" ]]; then
     local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/compliance/mdaihub.yaml" || c1=""
-    c2="./use_cases/compliance/mdaihub.yaml"
+    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/compliance/hub.yaml" || c1=""
+    c2="./use_cases/compliance/hub.yaml"
     c3="${MDAI_PATH}/hub/hub_compliance.yaml"
     hub_f="$(first_existing "$c1" "$c2" "$c3")"
   fi
@@ -847,10 +855,10 @@ cmd_df() {
 
   # Preferred (versioned) layout:
   #   ${USE_CASES_ROOT}/${version}/use_cases/data_filtration/otel.yaml
-  #   ${USE_CASES_ROOT}/${version}/use_cases/data_filtration/mdaihub.yaml
+  #   ${USE_CASES_ROOT}/${version}/use_cases/data_filtration/hub.yaml
   # Fallbacks:
   #   ./use_cases/data_filtration/otel.yaml
-  #   ./use_cases/data_filtration/mdaihub.yaml
+  #   ./use_cases/data_filtration/hub.yaml
   #   ${OTEL_PATH}/otel_dynamic_filtration.yaml
   #   ${MDAI_PATH}/hub/hub_dynamic_filtration.yaml
   if [[ -z "$otel_f" ]]; then
@@ -862,8 +870,8 @@ cmd_df() {
   fi
   if [[ -z "$hub_f" ]]; then
     local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/data_filtration/mdaihub.yaml" || c1=""
-    c2="./use_cases/data_filtration/mdaihub.yaml"
+    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/data_filtration/hub.yaml" || c1=""
+    c2="./use_cases/data_filtration/hub.yaml"
     c3="${MDAI_PATH}/hub/hub_dynamic_filtration.yaml"
     hub_f="$(first_existing "$c1" "$c2" "$c3")"
   fi
@@ -894,10 +902,10 @@ cmd_pii() {
 
   # Preferred (versioned) layout:
   #   ${USE_CASES_ROOT}/${version}/use_cases/pii/otel.yaml
-  #   ${USE_CASES_ROOT}/${version}/use_cases/pii/mdaihub.yaml
+  #   ${USE_CASES_ROOT}/${version}/use_cases/pii/hub.yaml
   # Fallbacks:
   #   ./use_cases/pii/otel.yaml
-  #   ./use_cases/pii/mdaihub.yaml
+  #   ./use_cases/pii/hub.yaml
   #   ${OTEL_PATH}/otel_pii.yaml
   #   ${MDAI_PATH}/hub/hub_pii.yaml
   if [[ -z "$otel_f" ]]; then
@@ -909,8 +917,8 @@ cmd_pii() {
   fi
   if [[ -z "$hub_f" ]]; then
     local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/pii/mdaihub.yaml" || c1=""
-    c2="./use_cases/pii/mdaihub.yaml"
+    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/pii/hub.yaml" || c1=""
+    c2="./use_cases/pii/hub.yaml"
     c3="${MDAI_PATH}/hub/hub_pii.yaml"
     hub_f="$(first_existing "$c1" "$c2" "$c3")"
   fi
@@ -924,7 +932,11 @@ cmd_pii() {
   fi
 }
 
-cmd_logs()       { act_check_tools_and_context; act_deploy_logs; }
+cmd_logs()       {
+  act_check_tools_and_context;
+  act_deploy_logs;
+}
+
 cmd_fluentd()    {
   act_check_tools_and_context
   local values="${SYN_PATH}/loggen_fluent_config.yaml"
@@ -976,6 +988,8 @@ USAGE:
 GLOBAL FLAGS:
   --cluster-name NAME        Kind cluster name (default: $KIND_CLUSTER_NAME)
   --kind-config FILE         Kind cluster config file (optional)
+  COMMANDS-f, --values FILE          Add a Helm values file (repeatable)
+
   --namespace NS             App namespace for kubectl applies (default: $NAMESPACE)
   --chart-namespace NS       Helm namespace (defaults to --namespace if omitted)
   --kube-context NAME        kubecontext for kubectl/helm
@@ -1001,6 +1015,8 @@ INSTALL / UPGRADE
   install_deps                   Prepare Kind cluster + dependencies
   install_mdai                   Helm install/upgrade + wait
                                  [--version VER] [--values FILE] [--set k=v] [--resources [PREFIX]] [--no-cert-manager]
+                                 [--version VER] [-f|--values FILE] [--set k=v] [--resources [PREFIX]] [--no-cert-manager]
+
   upgrade                        Helm upgrade/install only
 
 COMPONENTS
@@ -1054,6 +1070,10 @@ parse_trailing_globals() {
   local out=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      -f)
+        add_values "$2"
+        shift 2
+        ;;
       --cluster-name)      KIND_CLUSTER_NAME="$2"; shift 2 ;;
       --kind-config)       KIND_CONFIG="$2"; shift 2 ;;
       --namespace)         NAMESPACE="$2"; shift 2 ;;
@@ -1084,6 +1104,10 @@ parse_globals() {
   local seen_cmd=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      -f)
+        add_values "$2"
+        shift 2
+        ;;
       --cluster-name)      KIND_CLUSTER_NAME="$2"; shift 2 ;;
       --kind-config)       KIND_CONFIG="$2"; shift 2 ;;
       --namespace)         NAMESPACE="$2"; shift 2 ;;
@@ -1104,7 +1128,7 @@ parse_globals() {
       --verbose)           VERBOSE=true; shift ;;
       -h|--help)           usage; exit 0 ;;
       --)                  shift; break ;;
-      install|install_deps|install_mdai|upgrade|clean|delete|apply|delete_file|logs|hub|collector|fluentd|aws_secret|mdai_monitor|compliance|df|pii|report|gen-usage)
+      install|install_deps|install_mdai|upgrade|clean|delete|apply|delete_file|logs|hub|collector|fluentd|aws_secret|mdai_monitor|compliance|df|pii|report|gen-usage|use_case|use-case)
         seen_cmd="$1"; shift; break ;;
       *) err "Unknown flag or command: $1"; usage; exit 1 ;;
     esac
@@ -1158,6 +1182,8 @@ main() {
     fluentd)         call_with_cmd_args cmd_fluentd ;;
     aws_secret)      call_with_cmd_args cmd_aws_secret ;;
     mdai_monitor)    call_with_cmd_args cmd_mdai_mon ;;
+    use_case)        call_with_cmd_args cmd_use_case ;;
+    use-case)        call_with_cmd_args cmd_use_case ;;
     compliance)      call_with_cmd_args cmd_compliance ;;
     df)              call_with_cmd_args cmd_df ;;
     pii)             call_with_cmd_args cmd_pii ;;
@@ -1166,5 +1192,135 @@ main() {
     *) err "Unknown command: ${COMMAND:-}"; usage; exit 1 ;;
   esac
 }
+# ---------------------------------------------------------------------------
+# Unified use-case runner:
+#   ./mdai.sh use-case <pii|compliance|df|tail-sampling> [--version VER] [--hub PATH] [--otel PATH] [--apply FILE ...] [--delete]
+cmd_use_case() {
+  act_check_tools_and_context
+  local case_name="${1:-}"; shift || true
+  if [[ -z "$case_name" ]]; then
+    err "use-case: missing case name (e.g., compliance|pii|df)"
+    return 1
+  fi
+
+  local version="" DO_DELETE=false
+  local hub_f="" otel_f=""
+  local data_f=""
+  local -a extras=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --version) shift; version="${1:?}"; shift ;;
+      --hub)     shift; hub_f="${1:?}";  shift ;;
+      --otel)    shift; otel_f="${1:?}"; shift ;;
+      --data)    shift; data_f="${1:?}";  shift ;;
+      --apply)   shift; extras+=("${1:?}"); shift ;;
+      --delete)  DO_DELETE=true; shift ;;
+      --) shift; break ;;
+      *) err "use-case: unknown flag '$1'"; return 1 ;;
+    esac
+  done
+
+  # Helper: first_existing PATH...
+  first_existing() {
+    local f
+    for f in "$@"; do
+      [[ -n "$f" && -f "$f" ]] && { printf "%s" "$f"; return 0; }
+    done
+    return 1
+  }
+
+  # Use-case search roots (soft defaults if not set)
+  : "${USE_CASES_ROOT:=./use-cases}"
+  : "${MDAI_PATH:=./}"
+  : "${OTEL_PATH:=./}"
+
+  resolve_uc_file() {
+    local want="$1"  # "hub" or "otel"
+    local casedir1="" casedir2=""
+    if [[ -n "$version" ]]; then
+      casedir1="${USE_CASES_ROOT}/${version}/use-cases/${case_name}"
+      casedir2="${USE_CASES_ROOT}/${version}/use_cases/${case_name}"
+    fi
+    local local1="./use-cases/${case_name}"
+    local local2="./use_cases/${case_name}"
+    local fname="${want}.yaml"
+    case "$want" in
+      hub)
+        first_existing \
+          "${casedir1}/${fname}" "${casedir2}/${fname}" \
+          "${local1}/${fname}"   "${local2}/${fname}"   \
+          "${MDAI_PATH}/hub/hub_${case_name}.yaml" \
+          "${MDAI_PATH}/hub/hub_${case_name//-/_}.yaml" \
+          "${MDAI_PATH}/hub/hub_${case_name//_/-}.yaml"
+        ;;
+      otel)
+        first_existing \
+          "${casedir1}/${fname}" "${casedir2}/${fname}" \
+          "${local1}/${fname}"   "${local2}/${fname}"   \
+          "${OTEL_PATH}/otel_${case_name}.yaml" \
+          "${OTEL_PATH}/otel_${case_name//-/_}.yaml" \
+          "${OTEL_PATH}/otel_${case_name//_/-}.yaml"
+        ;;
+    esac
+  }
+
+  [[ -z "$hub_f"  ]]  && hub_f="$(resolve_uc_file hub || true)"
+  [[ -z "$otel_f" ]]  && otel_f="$(resolve_uc_file otel || true)"
+
+# Resolve data file, defaulting to common mock-data paths if not provided.
+resolve_data_file() {
+  # Search order: explicit -> local mock-data -> absolute mock-data
+  local cand
+  for cand in \
+    "./mock-data/fluentd_config.yaml" \
+    "./mock-data/fluentd_config.yml" \
+    "./mock-data/${case_name}.yaml" \
+    "./mock-data/${case_name}.yml" \
+    "./mock-data/${case_name}-data.yaml" \
+    "./mock-data/${case_name}-data.yml" \
+    "/mock-data/fluentd_config.yaml" \
+    "/mock-data/fluentd_config.yml" \
+    "/mock-data/${case_name}.yaml" \
+    "/mock-data/${case_name}.yml" \
+    "/mock-data/${case_name}-data.yaml" \
+    "/mock-data/${case_name}-data.yml" \
+  ; do
+    [[ -f "$cand" ]] && { printf "%s" "$cand"; return 0; }
+  done
+  return 1
+}
+
+if [[ -z "$data_f" ]]; then
+  data_f="$(resolve_data_file || true)"
+  if [[ -n "$data_f" ]]; then
+    info "use-case '${case_name}': resolved data file: $data_f"
+  else
+    warn "use-case '${case_name}': no mock-data file found; skipping data apply"
+  fi
+fi
+
+  if [[ -z "$hub_f" || -z "$otel_f" ]]; then
+    err "use-case: could not resolve files (hub:'$hub_f' otel:'$otel_f'). Try --hub and/or --otel."
+    return 1
+  fi
+
+  ns_ensure
+
+  if $DO_DELETE; then
+    k_delete "$otel_f"
+    k_delete "$hub_f"
+    if [[ -n "$data_f" && -f "$data_f" ]]; then k_delete "$data_f" || true; fi
+    if ((${#extras[@]:-0})); then for f in "${extras[@]}"; do k_delete "$f" || true; done; fi
+    ok "use-case '${case_name}': deleted"
+  else
+    k_apply "$otel_f"
+    k_apply "$hub_f"
+    if [[ -n "$data_f" && -f "$data_f" ]]; then k_apply "$data_f"; fi
+    if ((${#extras[@]:-0})); then for f in "${extras[@]}"; do k_apply "$f"; done; fi
+    ok "use-case '${case_name}': applied"
+  fi
+}
+
 
 main "$@"

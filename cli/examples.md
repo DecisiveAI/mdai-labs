@@ -1,6 +1,6 @@
-# MDAI CLI Examples
+# MDAI CLI Examples (updated)
 
-This page collects practical, copy-pasteable examples for common workflows using `./mdai.sh`.
+This page collects practical, copy‑pasteable examples for common workflows using `./mdai.sh` — now including the unified **use‑case** command, `--data` support, richer usage‑doc generation, and a basic unit test runner.
 
 ---
 
@@ -31,7 +31,7 @@ This page collects practical, copy-pasteable examples for common workflows using
 
 ## Installing with the OCI chart (default) + extras
 
-```
+```bash
 # Default OCI ref (oci://ghcr.io/decisiveai/mdai-hub), latest devel
 ./mdai.sh install_mdai
 
@@ -39,12 +39,7 @@ This page collects practical, copy-pasteable examples for common workflows using
 ./mdai.sh --chart-version v0.8.9 install_mdai
 
 # Use values files (repeat --values) and specific image tags with --set
-./mdai.sh \
-  --values ./values/base.yaml \
-  --values ./values/dev.yaml \
-  --set mdai-gateway.image.tag=0.8.9 \
-  --set mdai-operator.image.tag=0.8.9 \
-  install_mdai
+./mdai.sh   --values ./values/base.yaml   --values ./values/dev.yaml   --set mdai-gateway.image.tag=0.8.9   --set mdai-operator.image.tag=0.8.9   install_mdai
 
 # Pass extra helm args (repeatable)
 ./mdai.sh --helm-extra "--atomic" --helm-extra "--timeout 10m" install_mdai
@@ -52,20 +47,14 @@ This page collects practical, copy-pasteable examples for common workflows using
 
 ## Installing from a Helm repo (instead of OCI)
 
-```
+```bash
 # Override repo/name if you don’t want the default OCI ref
-./mdai.sh \
-  --chart-ref "" \
-  --chart-repo https://charts.mydecisive.ai \
-  --chart-name mdai-hub \
-  --chart-version v0.x.x \
-  install_mdai
-
+./mdai.sh   --chart-ref ""   --chart-repo https://charts.mydecisive.ai   --chart-name mdai-hub   --chart-version v0.x.x   install_mdai
 ```
 
 ## Namespaces
 
-```
+```bash
 # Change the app namespace for kubectl resources
 ./mdai.sh --namespace observability install_mdai
 
@@ -75,7 +64,7 @@ This page collects practical, copy-pasteable examples for common workflows using
 
 ## Skipping cert-manager or customizing install_deps
 
-```
+```bash
 # Skip cert-manager during deps install
 ./mdai.sh --no-cert-manager install_deps
 
@@ -83,40 +72,60 @@ This page collects practical, copy-pasteable examples for common workflows using
 ./mdai.sh --kind-config ./kind-config.yaml install_deps
 ```
 
-## Bundles (one-shot applies)
+## Use‑case bundles (unified command)
+
+The new **unified** `use-case` (alias: `use_case`) command applies a use‑case bundle consisting of **otel** and **hub** manifests, optional **mock‑data**, and any extra files you pass with `--apply`.
+
+> Resolution order for bundle files (high‑level): versioned directories → local `./use-cases/<case>` → fallbacks in `$OTEL_PATH` / `$MDAI_PATH`.
+
+### Basic apply
 
 ```bash
-# Compliance bundle (otel + hub)
-./mdai.sh compliance
+# Apply the "compliance" bundle for a specific version layout:
+#   $USE_CASES_ROOT/0.8.6/use-cases/compliance/{otel.yaml,hub.yaml}
+./mdai.sh use-case compliance --version 0.8.6
+```
 
-# Dynamic filtration bundle
-./mdai.sh df
+### Explicit files override
 
-# PII bundle
-./mdai.sh pii
+```bash
+./mdai.sh use-case df   --otel ./use-cases/df/otel.yaml   --hub  ./use-cases/df/hub.yaml
+```
 
-# Override paths explicitly
-./mdai.sh compliance --otel ./otel/otel_compliance.yaml --hub ./mdai/hub/hub_compliance.yaml
-./mdai.sh df         --otel ./otel/otel_dynamic_filtration.yaml --hub ./mdai/hub/hub_dynamic_filtration.yaml
-./mdai.sh pii        --otel ./otel/otel_pii.yaml        --hub ./mdai/hub/hub_pii.yaml
+### Auto‑applied mock‑data (default) or explicit `--data`
 
-# Apply versioned compliance bundle (uses 0.x.x/use_cases/compliance/{otel.yaml,mdaihub.yaml})
-./mdai.sh compliance --version 0.x.x
+If you don’t pass `--data`, the CLI auto‑searches common mock‑data locations and applies the first match (e.g. `./mock-data/fluentd_config.yaml`, `/mock-data/fluentd_config.yaml`, and a few case‑based variants).
 
-# Delete the same (skips missing files with a warning)
-./mdai.sh compliance --version 0.x.x --delete
+```bash
+# Will auto‑apply the first mock-data file found by the resolver
+./mdai.sh use-case compliance --version 0.8.6
 
-# Explicit files override versioned defaults
-./mdai.sh df --version 0.x.x --otel ./0.x.x/use_cases/dynamic_filtration/otel.yaml
+# Explicitly choose a data file
+./mdai.sh use-case compliance --version 0.8.6 --data ./mock-data/custom.yaml
+```
 
-# PII apply with fallback if versioned files are absent
-./mdai.sh pii --version 0.x.x
+### Extra files (repeatable) and delete
 
+```bash
+# Apply extras (repeat --apply)
+./mdai.sh use-case pii   --version 0.8.6   --apply ./extras/alerts.yaml   --apply ./extras/dashboards.yaml
+
+# Delete the bundle (also deletes the resolved data file and extras, best effort)
+./mdai.sh use-case compliance --version 0.8.6 --delete
+```
+
+### Legacy bundle commands (still supported)
+
+```bash
+# Legacy shorthands kept for backward compatibility
+./mdai.sh compliance --version 0.8.6
+./mdai.sh df         --version 0.8.6
+./mdai.sh pii        --version 0.8.6
 ```
 
 ## Individual components
 
-```
+```bash
 # Apply Hub / Collector directly (defaults shown)
 ./mdai.sh hub --file ./mdai/hub/hub_ref.yaml
 ./mdai.sh collector --file ./otel/otel_ref.yaml
@@ -134,51 +143,52 @@ This page collects practical, copy-pasteable examples for common workflows using
 ./mdai.sh mdai_monitor --file ./mdai/hub_monitor/mdai_monitor_no_secrets.yaml
 ```
 
-## Upgrades
+## Generate usage docs (new: command details + use‑case data)
 
-```
-# Upgrade to a newer chart (OCI)
-./mdai.sh --chart-version v0.9.0 upgrade
+Use `mdai-usage-gen.sh` to generate a **Usage** page straight from the CLI:
 
-# Upgrade with new values/sets
-./mdai.sh \
-  --values ./values/prod.yaml \
-  --set mdai-gateway.replicas=3 \
-  upgrade
-```
+```bash
+# Simple usage doc
+./mdai-usage-gen.sh --in ./mdai.sh --out ./docs/usage.md   --section "synopsis,globals,commands,defaults,usecase-data"
 
-## Reports
+# Include per-command help (collected by running '<cmd> --help')
+./mdai-usage-gen.sh --in ./mdai.sh --out ./docs/usage.md   --section "synopsis,globals,commands,command-details,defaults,usecase-data"   --scan-cmd-help
 
-```
-# Human-readable table to stdout
-./mdai.sh report
-
-# JSON to a file, then inspect with jq
-./mdai.sh report --format json --out build.json
-jq '.helm.chart_version, .workloads.deployments' build.json
-
-# YAML (pretty if yq is installed)
-./mdai.sh report --format yaml --out build.yaml
+# Attach your examples page to the end (this file)
+./mdai-usage-gen.sh --in ./mdai.sh --out ./docs/usage.md   --examples ./examples.md   --section "synopsis,commands,defaults,examples,usecase-data"
 ```
 
-## Cleanup
+> The generator also emits a **Use‑Case Data Defaults** section summarizing the mock‑data search order used by `use-case` when `--data` isn’t provided.
 
+## Unit test (no cluster required)
+
+A lightweight test script stubs `kubectl`/`helm` so you can validate `use-case` behavior (apply, `--data`, and `--delete`) without touching a real cluster.
+
+```bash
+# From repo root (ensure the test file is executable)
+chmod +x ./tests/mdai.test.sh
+
+# Run tests
+./tests/mdai.test.sh
+
+# You should see "+ kubectl ..." lines and a final success message:
+# ✅ All tests passed.
 ```
-# Uninstall Helm release/resources but keep the namespace
-./mdai.sh clean
 
-# Delete the Kind cluster
-./mdai.sh delete
-```
+## Troubleshooting & tips
 
-## Troubleshooting & Tips
-
-```
+```bash
 # Verbose mode (stream command output)
 ./mdai.sh --verbose install_mdai
 
 # Verify script syntax quickly
 bash -n mdai.sh && echo "Syntax OK"
+
+# Confirm your alias/path resolves to the intended file
+type -a mdai    # or: which mdai
+
+# DRY-RUN everything to see what would be changed
+./mdai.sh --dry-run use-case compliance --version 0.8.6
 
 # Check cert-manager pods if install_deps didn’t wait long enough
 kubectl get pods -n cert-manager -w

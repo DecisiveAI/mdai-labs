@@ -19,7 +19,8 @@ FLAGS:
   --out FILE          Output markdown (default: usage.md)
   --examples FILE     Optional extra examples to append (e.g., cli-usage.md)
   --section ORDER     Comma-separated section list in desired order. Valid:
-                      synopsis, globals, commands, defaults, examples
+                      synopsis, globals, commands, defaults, examples, command-details, usecase-data
+  --scan-cmd-help     Also run each discovered command with --help and include a Command Details section
                       Omit sections by leaving them out. Unknown names ignored.
   -h, --help          Show this help
 
@@ -34,12 +35,15 @@ EOF
 
 die() { echo "❌ $*" >&2; exit 1; }
 
+SCAN_CMD_HELP=0
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --in)       IN="${2:-}"; shift 2 ;;
     --out)      OUT="${2:-}"; shift 2 ;;
     --examples) EXAMPLES="${2:-}"; shift 2 ;;
     --section)  SECTION_ORDER="${2:-}"; shift 2 ;;
+    --scan-cmd-help) SCAN_CMD_HELP=1; shift ;;
     -h|--help)  usage; exit 0 ;;
     *) die "Unknown flag: $1";;
   esac
@@ -156,6 +160,45 @@ extract_defaults_table() {
 }
 
 # Trim leading/trailing blank lines of a block
+
+# Extract command names (first token before space or closing paren) from the COMMANDS section.
+extract_command_names() {
+  awk '
+    NF==0 { next }
+    {
+      gsub(/^[-*[:space:]]+/, "", $0)
+      cmd=$1
+      sub(/[)]+$/, "", cmd)
+      if (cmd ~ /^[a-zA-Z0-9_-]+$/) print cmd
+    }
+  '
+}
+
+# Try to get per-command help; ignore failures.
+get_command_help() {
+  local cmd="$1"
+  if bash "$IN" "$cmd" --help >/tmp/_mdai_cmd_help.$$ 2>/dev/null; then
+    cat /tmp/_mdai_cmd_help.$$; rm -f /tmp/_mdai_cmd_help.$$
+    return 0
+  fi
+  return 1
+}
+
+# Extract use-case mock-data candidates from mdai.sh (looks for resolve_data_file list)
+extract_usecase_data_candidates() {
+  awk '
+    BEGIN { infunc=0; inlist=0 }
+    $0 ~ /resolve_data_file\(\)/ { infunc=1 }
+    infunc && $0 ~ /for cand in \\/ { inlist=1; next }
+    inlist {
+      if ($0 ~ /; do/) { inlist=0; infunc=0; exit }
+      gsub(/[\\\\"]/, "", $0)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0)
+      if ($0 ~ /^\./ || $0 ~ /^\//) print $0
+    }
+  ' "$IN"
+}
+
 trim_block() {
   awk '
     { lines[NR]=$0 }
@@ -233,6 +276,41 @@ fi
 
 ORDERED_SECTIONS="$(compute_order "${SECTION_ORDER:-}")"
 
+
+COMMAND_DETAILS_TXT=""
+if [[ $SCAN_CMD_HELP -eq 1 ]]; then
+  CMDS_LIST="$(printf "%s\n" "$COMMANDS_TXT" | extract_command_names | sort -u)"
+  if [[ -n "$CMDS_LIST" ]]; then
+    while IFS= read -r c; do
+      [[ -z "$c" ]] && continue
+      H="$(get_command_help "$c" || true)"
+      if [[ -n "$H" ]]; then
+        COMMAND_DETAILS_TXT="${COMMAND_DETAILS_TXT}
+### ${c}
+
+\`\`\`text
+${H}
+\`\`\`
+"
+      fi
+    done <<< "$CMDS_LIST"
+  fi
+fi
+
+USECASE_DATA_TXT=""
+DATA_CANDS="$(extract_usecase_data_candidates || true)"
+if [[ -n "$DATA_CANDS" ]]; then
+  USECASE_DATA_TXT="The \`use-case\` command will attempt to apply a mock-data file by default.
+
+**Search order** (first match wins):
+
+"
+  while IFS= read -r d; do
+    [[ -z "$d" ]] && continue
+    USECASE_DATA_TXT="${USECASE_DATA_TXT}- \`${d}\`\n"
+  done <<< "$DATA_CANDS"
+fi
+
 # ---- Write file ------------------------------------------------------------
 
 SCRIPT_NAME="$(basename "$IN")"
@@ -292,6 +370,23 @@ NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           echo
         fi
         ;;
+
+command-details)
+  if [[ -n "$COMMAND_DETAILS_TXT" ]]; then
+    echo "## Command Details"
+    echo
+    printf "%b" "$COMMAND_DETAILS_TXT"
+    echo
+  fi
+  ;;
+usecase-data)
+  if [[ -n "$USECASE_DATA_TXT" ]]; then
+    echo "## Use-Case Data Defaults"
+    echo
+    printf "%b" "$USECASE_DATA_TXT"
+    echo
+  fi
+  ;;
     esac
   done <<< "$ORDERED_SECTIONS"
 } >"$OUT"

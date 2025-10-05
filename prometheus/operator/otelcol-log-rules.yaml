@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: otelcol-log-rules
+  namespace: mdai
+  labels:
+    # For kube-prometheus-stack, set this to your Helm release name so the Prometheus
+    # instance picks up the rules (e.g., "kube-prometheus-stack").
+    release: kube-prometheus-stack
+spec:
+  groups:
+  - name: otelcol-logs
+    interval: 30s
+    rules:
+    # Accepted per receiver (and transport, if present)
+    - record: otelcol:logs_accepted_rpm
+      expr: sum(rate(otelcol_receiver_accepted_log_records_total[1m])) * 60
+
+    # Exported per exporter
+    - record: otelcol:logs_exported_rpm
+      expr: sum(rate(otelcol_exporter_sent_log_records_total[1m])) * 60
+
+    # Accepted per receiver (and transport, if present)
+    - record: otelcol:logs_rec_per_rec
+      expr: sum by (receiver, transport) (rate(otelcol_receiver_accepted_log_records_total[1m])) * 60
+
+    # Exported per exporter
+    - record: otelcol:logs_exp_per_exp
+      expr: sum by (exporter) ( rate(otelcol_exporter_sent_log_records_total[1m])) * 60
+
+    # Delivery ratio (1.0 = exported equals accepted)
+    - record: otelcol:logs_delivery_ratio
+      expr: otelcol:logs_exported_rpm / ignoring() otelcol:logs_accepted_rpm
+
+    # Drop / backlog proxy RPM (positive => accepted > exported)
+    - record: otelcol:logs_backlog_rpm
+      expr: otelcol:logs_accepted_rpm - otelcol:logs_exported_rpm

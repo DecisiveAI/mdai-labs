@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mdai-logger-noisy
+  namespace: mdai
+  labels:
+    app.kubernetes.io/name: mdai-logger-noisy
+    app.kubernetes.io/part-of: mdai-log-generator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mdai-logger-noisy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mdai-logger-noisy
+        app.kubernetes.io/part-of: mdai-log-generator
+    spec:
+      containers:
+        - name: mdai-logger-noisy
+          image: busybox
+          resources:
+            limits:
+              memory: "16Mi"
+              cpu: "50m"
+            requests:
+              memory: "8Mi"
+              cpu: "25m"
+          env:
+            - name: LOG_MESSAGE
+              value: The algorithm successfully executed, triggering neural pathways and producing a burst of optimized data streams.
+            - name: LOG_MIN_INTERVAL
+              value: "20"  # minimum interval in seconds
+            - name: LOG_MAX_INTERVAL
+              value: "25"  # maximum interval in seconds
+            - name: LOG_MIN_COUNT
+              value: "500"
+            - name: LOG_MAX_COUNT
+              value: "1000"
+            - name: NOISY_SERVICE_NAME # must be service + a number
+              value: "service1234"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              LEVELS="ERROR WARNING INFO"
+              while true; do
+                COUNT=$(( (RANDOM % (${LOG_MAX_COUNT} - ${LOG_MIN_COUNT} + 1)) + ${LOG_MIN_COUNT} ))
+                INTERVAL=$(( (RANDOM % (${LOG_MAX_INTERVAL} - ${LOG_MIN_INTERVAL} + 1)) + ${LOG_MIN_INTERVAL} ))
+                for i in $(seq 1 $COUNT); do
+                  LOG_LEVEL=$(echo $LEVELS | awk -v idx=$((RANDOM % 3 + 1)) '{print $idx}')
+                  echo "$(date -Iseconds) - ${NOISY_SERVICE_NAME} - teamA - us-east-1 - ${LOG_LEVEL} - ${LOG_MESSAGE}"
+                done
+                sleep $INTERVAL
+              done
