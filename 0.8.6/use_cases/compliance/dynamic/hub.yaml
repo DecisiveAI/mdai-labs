@@ -9,6 +9,7 @@ metadata:
 spec:
   variables:
     - key: non_crit_levels
+      type: manual
       serializeAs:
         - name: "NON_CRIT_LEVELS"
           transformers:
@@ -18,6 +19,7 @@ spec:
       dataType: set
       storageType: "mdai-valkey"
     - key: crit_levels
+      type: manual
       serializeAs:
         - name: "CRIT_LEVELS"
           transformers:
@@ -27,6 +29,7 @@ spec:
       dataType: set
       storageType: "mdai-valkey"
     - key: crit_services
+      type: manual
       serializeAs:
         - name: "CRIT_SERVICES"
           transformers:

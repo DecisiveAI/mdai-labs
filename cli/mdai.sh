@@ -794,147 +794,6 @@ cmd_collector() {
 cmd_bundle() { act_apply_bundle "$1" "$2"; }
 cmd_bundle_del() { act_delete_bundle "$1" "$2"; }
 
-cmd_compliance() {
-  act_check_tools_and_context
-  local version="" DO_DELETE=false
-  local otel_f="" hub_f=""
-
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --otel)    shift; otel_f="${1:?}"; shift ;;
-      --hub)     shift; hub_f="${1:?}";  shift ;;
-      --version) shift; version="${1:?}"; shift ;;
-      --delete)  DO_DELETE=true; shift ;;
-      *) err "compliance: unknown flag $1"; exit 1 ;;
-    esac
-  done
-
-  # Preferred (versioned) layout:
-  #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/basic/otel.yaml
-  #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/basic/hub.yaml
-  # Fallbacks:
-  #   ./use_cases/compliance/basic/otel.yaml
-  #   ./use_cases/compliance/basic/hub.yaml
-  #   ${OTEL_PATH}/otel_compliance.yaml
-  #   ${MDAI_PATH}/hub/hub_compliance.yaml
-  if [[ -z "$otel_f" ]]; then
-    local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/compliance/basic/otel.yaml" || c1=""
-    c2="./use_cases/compliance/basic/otel.yaml"
-    c3="${OTEL_PATH}/otel_compliance.yaml"
-    otel_f="$(first_existing "$c1" "$c2" "$c3")"
-  fi
-  if [[ -z "$hub_f" ]]; then
-    local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/compliance/basic/hub.yaml" || c1=""
-    c2="./use_cases/compliance/basic/hub.yaml"
-    c3="${MDAI_PATH}/hub/hub_compliance.yaml"
-    hub_f="$(first_existing "$c1" "$c2" "$c3")"
-  fi
-
-  if $DO_DELETE; then
-    act_delete_bundle "$otel_f" "$hub_f"
-  else
-    k_apply "$otel_f"   # ensure_file inside k_apply will fail loudly if nothing exists
-    k_apply "$hub_f"
-    ok "Compliance bundle applied"
-  fi
-}
-
-cmd_df() {
-  act_check_tools_and_context
-  local version="" DO_DELETE=false
-  local otel_f="" hub_f=""
-
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --otel)    shift; otel_f="${1:?}"; shift ;;
-      --hub)     shift; hub_f="${1:?}";  shift ;;
-      --version) shift; version="${1:?}"; shift ;;
-      --delete)  DO_DELETE=true; shift ;;
-      *) err "df: unknown flag $1"; exit 1 ;;
-    esac
-  done
-
-  # Preferred (versioned) layout:
-  #   ${USE_CASES_ROOT}/${version}/use_cases/data_filtration/otel.yaml
-  #   ${USE_CASES_ROOT}/${version}/use_cases/data_filtration/hub.yaml
-  # Fallbacks:
-  #   ./use_cases/data_filtration/otel.yaml
-  #   ./use_cases/data_filtration/hub.yaml
-  #   ${OTEL_PATH}/otel_dynamic_filtration.yaml
-  #   ${MDAI_PATH}/hub/hub_dynamic_filtration.yaml
-  if [[ -z "$otel_f" ]]; then
-    local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/data_filtration/otel.yaml" || c1=""
-    c2="./use_cases/data_filtration/otel.yaml"
-    c3="${OTEL_PATH}/otel_dynamic_filtration.yaml"
-    otel_f="$(first_existing "$c1" "$c2" "$c3")"
-  fi
-  if [[ -z "$hub_f" ]]; then
-    local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/data_filtration/hub.yaml" || c1=""
-    c2="./use_cases/data_filtration/hub.yaml"
-    c3="${MDAI_PATH}/hub/hub_dynamic_filtration.yaml"
-    hub_f="$(first_existing "$c1" "$c2" "$c3")"
-  fi
-
-  if $DO_DELETE; then
-    act_delete_bundle "$otel_f" "$hub_f"
-  else
-    k_apply "$otel_f"
-    k_apply "$hub_f"
-    ok "Dynamic Filtration bundle applied"
-  fi
-}
-
-cmd_pii() {
-  act_check_tools_and_context
-  local version="" DO_DELETE=false
-  local otel_f="" hub_f=""
-
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --otel)    shift; otel_f="${1:?}"; shift ;;
-      --hub)     shift; hub_f="${1:?}";  shift ;;
-      --version) shift; version="${1:?}"; shift ;;
-      --delete)  DO_DELETE=true; shift ;;
-      *) err "pii: unknown flag $1"; exit 1 ;;
-    esac
-  done
-
-  # Preferred (versioned) layout:
-  #   ${USE_CASES_ROOT}/${version}/use_cases/pii/otel.yaml
-  #   ${USE_CASES_ROOT}/${version}/use_cases/pii/hub.yaml
-  # Fallbacks:
-  #   ./use_cases/pii/otel.yaml
-  #   ./use_cases/pii/hub.yaml
-  #   ${OTEL_PATH}/otel_pii.yaml
-  #   ${MDAI_PATH}/hub/hub_pii.yaml
-  if [[ -z "$otel_f" ]]; then
-    local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/pii/otel.yaml" || c1=""
-    c2="./use_cases/pii/otel.yaml"
-    c3="${OTEL_PATH}/otel_pii.yaml"
-    otel_f="$(first_existing "$c1" "$c2" "$c3")"
-  fi
-  if [[ -z "$hub_f" ]]; then
-    local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/pii/hub.yaml" || c1=""
-    c2="./use_cases/pii/hub.yaml"
-    c3="${MDAI_PATH}/hub/hub_pii.yaml"
-    hub_f="$(first_existing "$c1" "$c2" "$c3")"
-  fi
-
-  if $DO_DELETE; then
-    act_delete_bundle "$otel_f" "$hub_f"
-  else
-    k_apply "$otel_f"
-    k_apply "$hub_f"
-    ok "PII bundle applied"
-  fi
-}
-
 cmd_logs()       {
   act_check_tools_and_context;
   act_deploy_logs;
@@ -1188,9 +1047,6 @@ main() {
     mdai_monitor)    call_with_cmd_args cmd_mdai_mon ;;
     use_case)        call_with_cmd_args cmd_use_case ;;
     use-case)        call_with_cmd_args cmd_use_case ;;
-    compliance)      call_with_cmd_args cmd_compliance ;;
-    df)              call_with_cmd_args cmd_df ;;
-    pii)             call_with_cmd_args cmd_pii ;;
     report)          call_with_cmd_args cmd_report ;;
     gen-usage)       call_with_cmd_args cmd_gen_usage_external ;;
     *) err "Unknown command: ${COMMAND:-}"; usage; exit 1 ;;
@@ -1208,7 +1064,7 @@ cmd_use_case() {
   act_check_tools_and_context
   local case_name="${1:-}"; shift || true
   if [[ -z "$case_name" ]]; then
-    err "use-case: missing case name (e.g., compliance|pii|df)"
+    err "use-case: missing case name (e.g., compliance|pii|df|ts)"
     return 1
   fi
 
@@ -1312,14 +1168,10 @@ cmd_use_case() {
     # Search order: explicit -> local mock-data -> absolute mock-data
     local cand
     for cand in \
-      "./mock-data/fluentd_config.yaml" \
-      "./mock-data/fluentd_config.yml" \
       "./mock-data/${case_name}.yaml" \
       "./mock-data/${case_name}.yml" \
       "./mock-data/${case_name}-data.yaml" \
       "./mock-data/${case_name}-data.yml" \
-      "/mock-data/fluentd_config.yaml" \
-      "/mock-data/fluentd_config.yml" \
       "/mock-data/${case_name}.yaml" \
       "/mock-data/${case_name}.yml" \
       "/mock-data/${case_name}-data.yaml" \
@@ -1358,7 +1210,7 @@ cmd_use_case() {
   else
     k_apply "$otel_f"
     k_apply "$hub_f"
-    if [[ -n "$data_f" && -f "$data_f" ]]; then k_apply "$data_f"; fi
+    if [[ -n "$data_f" && -f "$data_f" ]]; then k_apply "$data_f" ; fi
     if ((${#extras[@]:-0})); then for f in "${extras[@]}"; do k_apply "$f"; done; fi
     ok "use-case '${case_name}': applied"
   fi

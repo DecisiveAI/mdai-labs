@@ -2,7 +2,7 @@ apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   labels:
-    mydecisive.ai/hub-name: mdaihub-compliance
+    mydecisive.ai/hub-name: mdaihub-ddf
   name: gateway
   namespace: mdai
 spec:
@@ -18,43 +18,64 @@ spec:
       cpu: "100m"
   envFrom:
     - configMapRef:
-        name: mdaihub-compliance-variables
+        name: mdaihub-ddf-variables
   config:
     receivers:
       fluentforward:
-        endpoint: "0.0.0.0:8006"
+        endpoint: '0.0.0.0:8006'
 
     extensions:
       health_check:
         endpoint: "${env:MY_POD_IP}:13133"
 
     processors:
+
       memory_limiter:
         check_interval: 23s
         limit_percentage: 75
         spike_limit_percentage: 15
+
       batch:
         send_batch_size: 1000
         send_batch_max_size: 10000
         timeout: 13s
 
+      # SWAP OUT FOR THE
+      # filter/static-non-crit-services:
+      #   error_mode: ignore
+      #   logs:
+      #     log_record:
+      #       - 'IsMatch(attributes["mdai_service"], "service1|service2")'
+
+      filter/dynamic-non-crit-services:
+        error_mode: ignore
+        logs:
+          log_record:
+            - '"${env:SERVICE_LIST_REGEX}" != "" and IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
+
+      groupbyattrs:
+        keys:
+          - mdai_service
+
+      resource/observer_receiver_tag:
+        attributes:
+          - key: observer_direction
+            value: "received"
+            action: upsert
+
+      resource/observer_exporter_tag:
+        attributes:
+          - key: observer_direction
+            value: "exported"
+            action: upsert
+
     exporters:
-      debug: {}
-
-      debug/compliance:
-        verbosity: detailed
-        sampling_initial: 2
-        sampling_thereafter: 100
-
-    connectors:
-      routing:
-        table:
-          - context: log
-            condition: 'IsMatch(attributes["level"], "^(?i)(${env:NON_CRIT_LEVELS})$")'
-            pipelines: [logs/filter]
-          - context: log
-            condition: 'IsMatch(attributes["level"], "^(?i)(${env:CRIT_LEVELS})$") or IsMatch(attributes["mdai_service"], "${env:CRIT_SERVICES}")'
-            pipelines: [logs/compliance]
+      debug/filtered: { }
+      debug/observed: { }
+      otlp/observer:
+        endpoint: mdaihub-ddf-observer-collector-service.mdai.svc.cluster.local:4317
+        tls:
+          insecure: true
 
     service:
       telemetry:
@@ -67,17 +88,33 @@ spec:
                   prometheus:
                     host: "0.0.0.0"
                     port: 8888
-      extensions: [health_check]
+      extensions:
+        - health_check
       pipelines:
-        logs/start:
-          receivers: [fluentforward]
-          processors: [memory_limiter, batch]
-          exporters: [routing]
+        logs/customer_pipeline:
+          receivers: [ fluentforward ]
+          processors: [
+            # REPLACED THE STATIC FILTER WITH DYNAMIC
+            # filter/static-non-crit-services,
+            filter/dynamic-non-crit-services,
+            # DO NOT CHANGE ORDER
+            resource/observer_exporter_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ debug/filtered, otlp/observer ]
 
-        logs/filter:
-          receivers: [routing]
-          exporters: [debug]
-
-        logs/compliance:
-          receivers: [routing]
-          exporters: [debug/compliance]
+        logs/watch_receivers:
+          receivers: [ fluentforward ]
+          processors: [
+            resource/observer_receiver_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ debug/observed, otlp/observer ]

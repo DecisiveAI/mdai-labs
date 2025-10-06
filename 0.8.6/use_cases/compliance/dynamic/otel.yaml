@@ -22,7 +22,7 @@ spec:
   config:
     receivers:
       fluentforward:
-        endpoint: "${env:MY_POD_IP}:8006"
+        endpoint: "0.0.0.0:8006"
 
     extensions:
       health_check:
@@ -65,7 +65,7 @@ spec:
             - pull:
                 exporter:
                   prometheus:
-                    host: "${env:MY_POD_IP}"
+                    host: "0.0.0.0"
                     port: 8888
       extensions: [health_check]
       pipelines:

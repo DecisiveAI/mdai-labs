@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: mdai-operator
     app.kubernetes.io/managed-by: kustomize
-  name: sample
+  name: ddf
   namespace: mdai
 spec:
   observers:
