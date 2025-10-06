@@ -16,10 +16,13 @@ spec:
     requests:
       memory: "128Mi"
       cpu: "100m"
+  envFrom:
+    - configMapRef:
+        name: mdaihub-compliance-variables
   config:
     receivers:
       fluentforward:
-        endpoint: "${env:MY_POD_IP}:8006"
+        endpoint: "0.0.0.0:8006"
 
     extensions:
       health_check:
@@ -37,20 +40,20 @@ spec:
 
     exporters:
       debug: {}
-      awss3:
-        s3uploader:
-          region: 'us-east-1'
-          s3_bucket: 'your_bucket'
-          s3_prefix: 'compliance'
+
+      debug/compliance:
+        verbosity: detailed
+        sampling_initial: 2
+        sampling_thereafter: 100
 
     connectors:
       routing:
         table:
           - context: log
-            condition: 'IsMatch(attributes["level"], "^(?i)(debug|info|warn)$")'
+            condition: 'IsMatch(attributes["level"], "^(?i)(${env:NON_CRIT_LEVELS})$")'
             pipelines: [logs/filter]
           - context: log
-            condition: 'IsMatch(attributes["level"], "^(?i)(error)$") or IsMatch(attributes["mdai_service"], "important-service")'
+            condition: 'IsMatch(attributes["level"], "^(?i)(${env:CRIT_LEVELS})$") or IsMatch(attributes["mdai_service"], "${env:CRIT_SERVICES}")'
             pipelines: [logs/compliance]
 
     service:
@@ -62,7 +65,7 @@ spec:
             - pull:
                 exporter:
                   prometheus:
-                    host: "${env:MY_POD_IP}"
+                    host: "0.0.0.0"
                     port: 8888
       extensions: [health_check]
       pipelines:
@@ -77,4 +80,4 @@ spec:
 
         logs/compliance:
           receivers: [routing]
-          exporters: [awss3]
+          exporters: [debug/compliance]

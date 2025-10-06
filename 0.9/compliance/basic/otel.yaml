@@ -19,7 +19,7 @@ spec:
   config:
     receivers:
       fluentforward:
-        endpoint: "${env:MY_POD_IP}:8006"
+        endpoint: "0.0.0.0:8006"
 
     extensions:
       health_check:
@@ -37,21 +37,6 @@ spec:
 
     exporters:
       debug: {}
-      awss3:
-        s3uploader:
-          region: 'us-east-1'
-          s3_bucket: 'your_bucket'
-          s3_prefix: 'compliance'
-
-    connectors:
-      routing:
-        table:
-          - context: log
-            condition: 'IsMatch(attributes["level"], "^(?i)(debug|info|warn)$")'
-            pipelines: [logs/filter]
-          - context: log
-            condition: 'IsMatch(attributes["level"], "^(?i)(error)$") or IsMatch(attributes["mdai_service"], "important-service")'
-            pipelines: [logs/compliance]
 
     service:
       telemetry:
@@ -62,19 +47,11 @@ spec:
             - pull:
                 exporter:
                   prometheus:
-                    host: "${env:MY_POD_IP}"
+                    host: "0.0.0.0"
                     port: 8888
       extensions: [health_check]
       pipelines:
-        logs/start:
+        logs/customer_pipeline:
           receivers: [fluentforward]
           processors: [memory_limiter, batch]
-          exporters: [routing]
-
-        logs/filter:
-          receivers: [routing]
           exporters: [debug]
-
-        logs/compliance:
-          receivers: [routing]
-          exporters: [awss3]

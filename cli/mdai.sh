@@ -59,13 +59,19 @@ err()  { log "❌ $*" >&2; }
 # ==============
 # Helpers funcs
 # ==============
+# --- Verbose/DRY-RUN runner -----------------------------------------------
+: "${VERBOSE:=false}"   # global default; --verbose should flip this to true elsewhere
+: "${DRY_RUN:=false}"
+
+print_cmd() { printf '+ %s\n' "$*"; }
+
 run() {
   if "$DRY_RUN"; then
-    echo "+ $*"
+    print_cmd "$@"
     return 0
   fi
   if "$VERBOSE"; then
-    echo "+ $*"
+    print_cmd "$@"
     eval "$@"
     return $?
   fi
@@ -128,12 +134,14 @@ apply_no_cert_manager_sets() {
 # ==============
 # Kubernetes helpers
 # ==============
+
 k_apply() {
   local f="$1"
   ensure_file "$f"
   if "$DRY_RUN"; then
     echo "+ kubectl $KCTX apply -f $f -n ${NAMESPACE}"
   else
+    echo "+ kubectl $KCTX apply -f $f -n ${NAMESPACE}"
     kubectl $KCTX apply -f "$f" -n "${NAMESPACE}"
   fi
 }
@@ -147,6 +155,7 @@ k_delete() {
   if "$DRY_RUN"; then
     echo "+ kubectl $KCTX delete -f $f -n ${NAMESPACE}"
   else
+    echo "+ kubectl $KCTX delete -f $f -n ${NAMESPACE}"
     kubectl $KCTX delete -f "$f" -n "${NAMESPACE}"
   fi
 }
@@ -289,20 +298,13 @@ act_install_cert_manager() {
   if "$DRY_RUN"; then
     echo "+ kubectl $KCTX apply -f ${CERT_MANAGER_URL}"
   else
-    kubectl $KCTX apply -f "${CERT_MANAGER_URL}" || warn "cert-manager: apply failed"
+    run "kubectl $KCTX apply -f ${CERT_MANAGER_URL} >/dev/null 2>&1" || warn "cert-manager: apply failed"
+    run "kubectl $KCTX wait --for=condition=Established crd/certificates.cert-manager.io --timeout=60s >/dev/null 2>&1" || warn "CRD not ready"
+    run "kubectl $KCTX wait --for=condition=Available deploy -l app.kubernetes.io/name=cert-manager -n cert-manager --timeout=180s >/dev/null 2>&1" || warn "deploy not available"
+    run "kubectl $KCTX wait --for=condition=Ready pod -l app.kubernetes.io/name=cert-manager -n cert-manager --timeout=180s >/dev/null 2>&1" || warn "pods not ready"
+    run "kubectl $KCTX wait --for=condition=Ready pod -l app.kubernetes.io/name=webhook -n cert-manager --timeout=120s >/dev/null 2>&1" || warn "webhook not ready"
   fi
 
-  info "Waiting for cert-manager CRDs..."
-  run "kubectl $KCTX wait --for=condition=Established crd/certificates.cert-manager.io --timeout=60s" || warn "CRD not ready"
-
-  info "Waiting for cert-manager Deployments..."
-  run "kubectl $KCTX wait --for=condition=Available deploy -l app.kubernetes.io/name=cert-manager -n cert-manager --timeout=180s" || warn "deploy not available"
-
-  info "Waiting for cert-manager Pods..."
-  run "kubectl $KCTX wait --for=condition=Ready pod -l app.kubernetes.io/name=cert-manager -n cert-manager --timeout=180s" || warn "pods not ready"
-
-  info "Waiting for cert-manager webhook..."
-  run "kubectl $KCTX wait --for=condition=Ready pod -l app.kubernetes.io/name=webhook -n cert-manager --timeout=120s" || warn "webhook not ready"
   ok "cert-manager ready (or skipped warnings)."
 }
 
@@ -1305,41 +1307,41 @@ cmd_use_case() {
   [[ -z "$hub_f"  ]]  && hub_f="$(resolve_uc_file hub || true)"
   [[ -z "$otel_f" ]]  && otel_f="$(resolve_uc_file otel || true)"
 
-# Resolve data file, defaulting to common mock-data paths if not provided.
-resolve_data_file() {
-  # Search order: explicit -> local mock-data -> absolute mock-data
-  local cand
-  for cand in \
-    "./mock-data/fluentd_config.yaml" \
-    "./mock-data/fluentd_config.yml" \
-    "./mock-data/${case_name}.yaml" \
-    "./mock-data/${case_name}.yml" \
-    "./mock-data/${case_name}-data.yaml" \
-    "./mock-data/${case_name}-data.yml" \
-    "/mock-data/fluentd_config.yaml" \
-    "/mock-data/fluentd_config.yml" \
-    "/mock-data/${case_name}.yaml" \
-    "/mock-data/${case_name}.yml" \
-    "/mock-data/${case_name}-data.yaml" \
-    "/mock-data/${case_name}-data.yml" \
-  ; do
-    [[ -f "$cand" ]] && { printf "%s" "$cand"; return 0; }
-  done
-  return 1
-}
+  # Resolve data file, defaulting to common mock-data paths if not provided.
+  resolve_data_file() {
+    # Search order: explicit -> local mock-data -> absolute mock-data
+    local cand
+    for cand in \
+      "./mock-data/fluentd_config.yaml" \
+      "./mock-data/fluentd_config.yml" \
+      "./mock-data/${case_name}.yaml" \
+      "./mock-data/${case_name}.yml" \
+      "./mock-data/${case_name}-data.yaml" \
+      "./mock-data/${case_name}-data.yml" \
+      "/mock-data/fluentd_config.yaml" \
+      "/mock-data/fluentd_config.yml" \
+      "/mock-data/${case_name}.yaml" \
+      "/mock-data/${case_name}.yml" \
+      "/mock-data/${case_name}-data.yaml" \
+      "/mock-data/${case_name}-data.yml" \
+    ; do
+      [[ -f "$cand" ]] && { printf "%s" "$cand"; return 0; }
+    done
+    return 1
+  }
 
-if [[ -z "$data_f" ]]; then
-  data_f="$(resolve_data_file || true)"
-  if [[ -n "$data_f" ]]; then
-    info "use-case '${case_name}': resolved data file: $data_f"
-  else
-    warn "use-case '${case_name}': no mock-data file found; skipping data apply"
+  if [[ -z "$data_f" ]]; then
+    data_f="$(resolve_data_file || true)"
+    if [[ -n "$data_f" ]]; then
+      info "use-case '${case_name}': resolved data file: $data_f"
+    else
+      warn "use-case '${case_name}': no mock-data file found; skipping data apply"
+    fi
   fi
-fi
 
   if [[ -z "$hub_f" || -z "$otel_f" ]]; then
 
-  info "hub_f: $hub_f otel_f: $otel_f"
+    info "hub_f: $hub_f otel_f: $otel_f"
 
     err "use-case: could not resolve files (hub:'$hub_f' otel:'$otel_f'). Try --hub and/or --otel."
     return 1
