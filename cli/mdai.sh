@@ -16,7 +16,7 @@ HCTX=""
 # ========================
 # Defaults (env overridable)
 # ========================
-KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-mdai}"
+KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-mdai-labs}"
 KIND_CONFIG="${KIND_CONFIG:-}"
 NAMESPACE="${NAMESPACE:-mdai}"                  # app namespace for kubectl applies
 CHART_NAMESPACE="${CHART_NAMESPACE:-}"          # helm namespace (defaults to NAMESPACE if empty)
@@ -37,6 +37,11 @@ SYN_PATH="${SYN_PATH:-./synthetics}"
 OTEL_PATH="${OTEL_PATH:-./otel}"
 MDAI_PATH="${MDAI_PATH:-./mdai}"
 USE_CASES_ROOT="${USE_CASES_ROOT:-.}"          # root that contains versioned /use_cases trees
+# State / run-tracking (env overridable)
+MDAI_STATE_DIR="${MDAI_STATE_DIR:-./.mdai/state}"
+MDAI_UC_STATE_DIR="${MDAI_UC_STATE_DIR:-${MDAI_STATE_DIR}/use-cases}"
+MDAI_UC_RUNS_NDJSON="${MDAI_UC_RUNS_NDJSON:-${MDAI_UC_STATE_DIR}/runs.ndjson}"
+MDAI_UC_RUNS_LOG="${MDAI_UC_RUNS_LOG:-${MDAI_UC_STATE_DIR}/runs.log}"
 
 # Usage variables
 HELP_EXAMPLES_FILE="${HELP_EXAMPLES_FILE:-./cli/examples.md}"
@@ -255,6 +260,8 @@ ${vflags} ${sflags} ${xflags} \
 
   if ! run "$cmd"; then
     err "Helm install/upgrade failed for release '${rel}' in namespace '${ns}'."
+
+    info "Supported '${rel}' helm chart versions can be found at https://artifacthub.io/packages/helm/mdai-hub/mdai-hub."
     return 1
   fi
 
@@ -924,6 +931,12 @@ DEPRECATED (prefer `use-case`)
 
 For a full, nicely formatted guide, run:
   ./mdai.sh gen-usage --out ./docs/usage.md --examples ./cli/examples.md
+
+HISTORY
+  use-case-history [--json|--table]
+                    Show tracked apply/delete operations from ./.mdai/state/use-cases.
+                    Flags: --case NAME  --action apply|delete  --since TS  --until TS
+
 EOF
 }
 
@@ -1047,10 +1060,30 @@ main() {
     mdai_monitor)    call_with_cmd_args cmd_mdai_mon ;;
     use_case)        call_with_cmd_args cmd_use_case ;;
     use-case)        call_with_cmd_args cmd_use_case ;;
+    use-case-history) call_with_cmd_args cmd_use_case_history ;;
+    use_case_history) call_with_cmd_args cmd_use_case_history ;;
     report)          call_with_cmd_args cmd_report ;;
     gen-usage)       call_with_cmd_args cmd_gen_usage_external ;;
     *) err "Unknown command: ${COMMAND:-}"; usage; exit 1 ;;
   esac
+}
+
+# ========================
+# Use-case run tracking
+# ========================
+uc_state_init() {
+  mkdir -p "${MDAI_UC_STATE_DIR}"
+}
+
+uc_track() {
+  local action="$1" case_name="$2" result="$3" version="${4:-}" workflow="${5:-}"
+  local hub_f="${6:-}" otel_f="${7:-}" data_f="${8:-}"
+  uc_state_init
+  local ts; ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  printf '{"ts":"%s","action":"%s","case":"%s","result":"%s","version":"%s","workflow":"%s","hub":"%s","otel":"%s","data":"%s"}
+'     "$ts" "$action" "$case_name" "$result" "${version}" "${workflow}" "${hub_f}" "${otel_f}" "${data_f}" >> "${MDAI_UC_RUNS_NDJSON}"
+  printf '%s  %-6s  case=%s  version=%s  workflow=%s  hub=%s  otel=%s  data=%s  result=%s
+'     "$ts" "$action" "$case_name" "${version:-<none>}" "${workflow:-<none>}" "${hub_f:-<auto>}" "${otel_f:-<auto>}" "${data_f:-<none>}" "ok" >> "${MDAI_UC_RUNS_LOG}"
 }
 # ---------------------------------------------------------------------------
 # Unified use-case runner:
@@ -1081,6 +1114,7 @@ cmd_use_case() {
       --data)    shift; data_f="${1:?}";  shift ;;
       --apply)   shift; extras+=("${1:?}"); shift ;;
       --delete)  DO_DELETE=true; shift ;;
+      --remove)  DO_DELETE=true; shift ;;
       --) shift; break ;;
       --workflow=*)
         WORKFLOW="${1#*=}"
@@ -1207,13 +1241,105 @@ cmd_use_case() {
     if [[ -n "$data_f" && -f "$data_f" ]]; then k_delete "$data_f" || true; fi
     if ((${#extras[@]:-0})); then for f in "${extras[@]}"; do k_delete "$f" || true; done; fi
     ok "use-case '${case_name}': deleted"
+    uc_track "delete" "$case_name" "ok" "$version" "$WORKFLOW" "$hub_f" "$otel_f" "$data_f"
   else
     k_apply "$otel_f"
     k_apply "$hub_f"
     if [[ -n "$data_f" && -f "$data_f" ]]; then k_apply "$data_f" ; fi
     if ((${#extras[@]:-0})); then for f in "${extras[@]}"; do k_apply "$f"; done; fi
     ok "use-case '${case_name}': applied"
+    uc_track "apply" "$case_name" "ok" "$version" "$WORKFLOW" "$hub_f" "$otel_f" "$data_f"
   fi
+}
+
+# ---------------------------------------------------------------------------
+# use-case-history: show the local ledger of use-case runs
+#   ./mdai.sh use-case-history [--json|--table] [--case NAME] [--action apply|delete] [--since TS] [--until TS]
+cmd_use_case_history() {
+  local fmt="table"
+  local f_case=""
+  local f_action=""
+  local f_since=""
+  local f_until=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --json)  fmt="json"; shift ;;
+      --table) fmt="table"; shift ;;
+      --case)  shift; f_case="${1:-}"; shift ;;
+      --action) shift; f_action="${1:-}"; shift ;;
+      --since) shift; f_since="${1:-}"; shift ;;
+      --until) shift; f_until="${1:-}"; shift ;;
+      -h|--help)
+        cat <<'HLP'
+use-case-history
+  Show tracked use-case apply/delete operations.
+
+USAGE:
+  ./mdai.sh use-case-history [--json|--table]
+                             [--case NAME] [--action apply|delete]
+                             [--since ISO8601] [--until ISO8601]
+
+FLAGS:
+  --json        Emit newline-delimited JSON (from runs.ndjson)
+  --table       Pretty table (default)
+  --case NAME   Filter by case name (exact)
+  --action      Filter by action: apply|delete
+  --since TS    ISO8601 (UTC) lower bound, inclusive (e.g., 2025-10-06T00:00:00Z)
+  --until TS    ISO8601 (UTC) upper bound, inclusive
+
+FILES:
+  ${MDAI_UC_RUNS_NDJSON}
+  ${MDAI_UC_RUNS_LOG}
+HLP
+        return 0
+        ;;
+      *) err "use-case-history: unknown flag '$1'"; return 1 ;;
+    esac
+  done
+
+  uc_state_init
+  if [[ ! -f "$MDAI_UC_RUNS_NDJSON" ]]; then
+    err "No history yet at $MDAI_UC_RUNS_NDJSON"
+    return 1
+  fi
+
+  awk -v want_case="$f_case" -v want_action="$f_action" -v since="$f_since" -v until="$f_until" -v mode="$fmt" '
+    function jget(k,   s) {
+      s = $0
+      if (match(s, """ k "":"[^"]*"")) {
+        return substr(s, RSTART + length(k) + 4, RLENGTH - (length(k) + 5))
+      }
+      return ""
+    }
+    BEGIN{
+      if (mode=="table") {
+        printf "%-20s  %-6s  %-16s  %-10s  %-9s  %s
+", "TIMESTAMP","ACTION","CASE","VERSION","WORKFLOW","DATA"
+        printf "%-20s  %-6s  %-16s  %-10s  %-9s  %s
+", "--------------------","------","----------------","----------","---------","----"
+      }
+    }
+    {
+      ts = jget("ts")
+      act = jget("action")
+      cs = jget("case")
+      ver = jget("version")
+      wf  = jget("workflow")
+      dat = jget("data")
+
+      if (want_case  != "" && cs  != want_case)  next
+      if (want_action!= "" && act != want_action) next
+      if (since != "" && ts < since) next
+      if (until != "" && ts > until) next
+
+      if (mode=="json") {
+        print $0
+      } else {
+        printf "%-20s  %-6s  %-16s  %-10s  %-9s  %s
+", ts, act, cs, ver, wf, dat
+      }
+    }
+  ' "$MDAI_UC_RUNS_NDJSON"
 }
 
 

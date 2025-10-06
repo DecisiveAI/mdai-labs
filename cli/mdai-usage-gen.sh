@@ -225,7 +225,6 @@ normalize_section() {
     *)                                    echo "" ;;
   esac
 }
-}
 
 # Compute effective section order
 compute_order() {

@@ -131,7 +131,7 @@ Each use-case can define one or more **workflow** variants — typically:
 - `static` — fixed resources for reproducible replay
 - `dynamic` — self-adjusting, Smart Telemetry-driven
 
-Use the `--workflow` flag (or `-w`) to select the flavor.  
+Use the `--workflow` flag (or `-w`) to select the flavor.
 When omitted, `basic` is assumed.
 
 ```bash
@@ -222,4 +222,19 @@ type -a mdai    # or: which mdai
 
 # Check cert-manager pods if install_deps didn’t wait long enough
 kubectl get pods -n cert-manager -w
+```
+
+
+### Filtered history examples
+
+```bash
+# Only applied actions for a case in the last day
+./mdai.sh use-case-history --case compliance --action apply --since "$(date -u -v-1d +%Y-%m-%dT%H:%M:%SZ || date -u -d '1 day ago' +%Y-%m-%dT%H:%M:%SZ)"
+
+# JSON for a single case, between two timestamps
+./mdai.sh use-case-history --json --case pii \
+  --since 2025-10-01T00:00:00Z --until 2025-10-31T23:59:59Z
+
+# Most recent operations (tail, human log)
+tail -n 20 ./.mdai/state/use-cases/runs.log
 ```

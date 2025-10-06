@@ -1,6 +1,6 @@
 # mdai.sh — Usage
 
-_Generated on 2025-10-05T09:47:40Z_
+_Generated on 2025-10-06T21:43:55Z_
 
 ## Synopsis (from `--help`)
 
@@ -13,6 +13,8 @@ USAGE:
 GLOBAL FLAGS:
   --cluster-name NAME        Kind cluster name (default: $KIND_CLUSTER_NAME)
   --kind-config FILE         Kind cluster config file (optional)
+  COMMANDS-f, --values FILE          Add a Helm values file (repeatable)
+
   --namespace NS             App namespace for kubectl applies (default: $NAMESPACE)
   --chart-namespace NS       Helm namespace (defaults to --namespace if omitted)
   --kube-context NAME        kubecontext for kubectl/helm
@@ -32,12 +34,15 @@ GLOBAL FLAGS:
   -h, --help                 Show help
 
 COMMANDS:
+  use_case NAME [--version VER] [--hub FILE] [--otel FILE] [--workflow basic|static|dynamic] [--debug-resolve]
 
 INSTALL / UPGRADE
   install                        Create Kind deps then install MDAI (alias: install_deps + install_mdai)
   install_deps                   Prepare Kind cluster + dependencies
   install_mdai                   Helm install/upgrade + wait
                                  [--version VER] [--values FILE] [--set k=v] [--resources [PREFIX]] [--no-cert-manager]
+                                 [--version VER] [-f|--values FILE] [--set k=v] [--resources [PREFIX]] [--no-cert-manager]
+
   upgrade                        Helm upgrade/install only
 
 COMPONENTS
@@ -82,6 +87,11 @@ DEPRECATED (prefer `use-case`)
 
 For a full, nicely formatted guide, run:
   ./mdai.sh gen-usage --out ./docs/usage.md --examples ./cli/examples.md
+
+HISTORY
+  use-case-history [--json|--table]
+                    Show tracked apply/delete operations from ./.mdai/state/use-cases.
+                    Flags: --case NAME  --action apply|delete  --since TS  --until TS
 ```
 
 ## Global Flags
@@ -89,6 +99,8 @@ For a full, nicely formatted guide, run:
 ```text
   --cluster-name NAME        Kind cluster name (default: $KIND_CLUSTER_NAME)
   --kind-config FILE         Kind cluster config file (optional)
+  COMMANDS-f, --values FILE          Add a Helm values file (repeatable)
+
   --namespace NS             App namespace for kubectl applies (default: $NAMESPACE)
   --chart-namespace NS       Helm namespace (defaults to --namespace if omitted)
   --kube-context NAME        kubecontext for kubectl/helm
@@ -111,11 +123,15 @@ For a full, nicely formatted guide, run:
 ## Commands
 
 ```text
+  use_case NAME [--version VER] [--hub FILE] [--otel FILE] [--workflow basic|static|dynamic] [--debug-resolve]
+
 INSTALL / UPGRADE
   install                        Create Kind deps then install MDAI (alias: install_deps + install_mdai)
   install_deps                   Prepare Kind cluster + dependencies
   install_mdai                   Helm install/upgrade + wait
                                  [--version VER] [--values FILE] [--set k=v] [--resources [PREFIX]] [--no-cert-manager]
+                                 [--version VER] [-f|--values FILE] [--set k=v] [--resources [PREFIX]] [--no-cert-manager]
+
   upgrade                        Helm upgrade/install only
 
 COMPONENTS
@@ -160,13 +176,19 @@ DEPRECATED (prefer `use-case`)
 
 For a full, nicely formatted guide, run:
   ./mdai.sh gen-usage --out ./docs/usage.md --examples ./cli/examples.md
+
+HISTORY
+  use-case-history [--json|--table]
+                    Show tracked apply/delete operations from ./.mdai/state/use-cases.
+                    Flags: --case NAME  --action apply|delete  --since TS  --until TS
 ```
 
 ## Defaults (auto-detected)
 
 | Variable | Default | Note |
 |---|---|---|
-| KIND_CLUSTER_NAME | mdai |  |
+| WORKFLOW | static |  |
+| KIND_CLUSTER_NAME | mdai-labs |  |
 | KIND_CONFIG |  |  |
 | NAMESPACE | mdai | app namespace for kubectl applies |
 | CHART_NAMESPACE |  | helm namespace (defaults to NAMESPACE if empty) |
@@ -182,6 +204,10 @@ For a full, nicely formatted guide, run:
 | OTEL_PATH | ./otel |  |
 | MDAI_PATH | ./mdai |  |
 | USE_CASES_ROOT | . | root that contains versioned /use_cases trees |
+| MDAI_STATE_DIR | ./.mdai/state |  |
+| MDAI_UC_STATE_DIR | ${MDAI_STATE_DIR |  |
+| MDAI_UC_RUNS_NDJSON | ${MDAI_UC_STATE_DIR |  |
+| MDAI_UC_RUNS_LOG | ${MDAI_UC_STATE_DIR |  |
 | HELP_EXAMPLES_FILE | ./cli/examples.md |  |
 | HELP_EXAMPLES_LINES | 40 |  |
 | DRY_RUN | false |  |
@@ -315,6 +341,36 @@ If you don’t pass `--data`, the CLI auto‑searches common mock‑data locatio
 ./mdai.sh pii        --version 0.8.6
 ```
 
+### Use-case workflows (new)
+
+Each use-case can define one or more **workflow** variants — typically:
+
+- `basic` — default starter flow
+- `static` — fixed resources for reproducible replay
+- `dynamic` — self-adjusting, Smart Telemetry-driven
+
+Use the `--workflow` flag (or `-w`) to select the flavor.  
+When omitted, `basic` is assumed.
+
+```bash
+# Apply the compliance use-case (basic workflow)
+./mdai.sh use-case compliance --version 0.8.6
+
+# Static workflow
+./mdai.sh use-case compliance --version 0.8.6 --workflow static
+
+# Dynamic workflow
+./mdai.sh use-case compliance --version 0.8.6 -w dynamic
+```
+
+**File resolution priority** (for both hub & otel):
+
+```
+<version>/use_cases/<case>/<workflow>/{hub.yaml,otel.yaml}
+<version>/use_cases/<case>/{hub.yaml,otel.yaml}
+```
+> Explicit `--hub` / `--otel` arguments still override all.
+
 ## Individual components
 
 ```bash
@@ -384,5 +440,20 @@ type -a mdai    # or: which mdai
 
 # Check cert-manager pods if install_deps didn’t wait long enough
 kubectl get pods -n cert-manager -w
+```
+
+
+### Filtered history examples
+
+```bash
+# Only applied actions for a case in the last day
+./mdai.sh use-case-history --case compliance --action apply --since "$(date -u -v-1d +%Y-%m-%dT%H:%M:%SZ || date -u -d '1 day ago' +%Y-%m-%dT%H:%M:%SZ)"
+
+# JSON for a single case, between two timestamps
+./mdai.sh use-case-history --json --case pii \
+  --since 2025-10-01T00:00:00Z --until 2025-10-31T23:59:59Z
+
+# Most recent operations (tail, human log)
+tail -n 20 ./.mdai/state/use-cases/runs.log
 ```
 
