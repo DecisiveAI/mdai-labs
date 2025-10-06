@@ -220,8 +220,11 @@ normalize_section() {
     commands|cmds|cmd)                    echo "commands" ;;
     defaults|vars|variables)              echo "defaults" ;;
     examples|example|ex)                  echo "examples" ;;
+    command-details|commanddetails|details) echo "command-details" ;;
+    usecase-data|usecasedata|usecase)     echo "usecase-data" ;;
     *)                                    echo "" ;;
   esac
+}
 }
 
 # Compute effective section order

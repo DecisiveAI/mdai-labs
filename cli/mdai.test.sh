@@ -85,4 +85,33 @@ grep -q '+ kubectl .* delete -f .*use-cases/0.8.6/compliance/otel.yaml' "$OUT3"
 grep -q '+ kubectl .* delete -f .*use-cases/0.8.6/compliance/hub.yaml' "$OUT3"
 grep -q '+ kubectl .* delete -f .*mock-data/fluentd_config.yaml' "$OUT3"
 
+# --- workflow directories/manifests ---
+mkdir -p "$WORK/use-cases/0.8.6/compliance/basic" \
+         "$WORK/use-cases/0.8.6/compliance/static" \
+         "$WORK/use-cases/0.8.6/compliance/dynamic"
+
+for wf in basic static dynamic; do
+  cat >"$WORK/use-cases/0.8.6/compliance/${wf}/otel.yaml" <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: otel-${wf} }
+data: { type: ${wf} }
+EOF
+
+  cat >"$WORK/use-cases/0.8.6/compliance/${wf}/hub.yaml" <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: hub-${wf} }
+data: { type: ${wf} }
+EOF
+done
+
+# 4) Workflow-specific resolver
+for wf in basic static dynamic; do
+  OUT="$WORK/out-${wf}.txt"
+  ( cd "$WORK" && bash "$MDAI" use-case compliance --version 0.8.6 --workflow "$wf" ) | tee "$OUT"
+  grep -q "+ kubectl .*apply -f .*use-cases/0.8.6/compliance/${wf}/otel.yaml" "$OUT"
+  grep -q "+ kubectl .*apply -f .*use-cases/0.8.6/compliance/${wf}/hub.yaml" "$OUT"
+done
+
 echo "✅ All tests passed."

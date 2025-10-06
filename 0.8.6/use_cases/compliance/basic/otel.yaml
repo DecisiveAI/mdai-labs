@@ -16,9 +16,6 @@ spec:
     requests:
       memory: "128Mi"
       cpu: "100m"
-  envFrom:
-    - configMapRef:
-        name: mdaihub-compliance-variables
   config:
     receivers:
       fluentforward:
@@ -40,11 +37,6 @@ spec:
 
     exporters:
       debug: {}
-      awss3:
-        s3uploader:
-          region: 'us-east-1'
-          s3_bucket: 'your_bucket'
-          s3_prefix: 'compliance'
 
     service:
       telemetry:

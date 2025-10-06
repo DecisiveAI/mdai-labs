@@ -123,6 +123,36 @@ If you don’t pass `--data`, the CLI auto‑searches common mock‑data locatio
 ./mdai.sh pii        --version 0.8.6
 ```
 
+### Use-case workflows (new)
+
+Each use-case can define one or more **workflow** variants — typically:
+
+- `basic` — default starter flow
+- `static` — fixed resources for reproducible replay
+- `dynamic` — self-adjusting, Smart Telemetry-driven
+
+Use the `--workflow` flag (or `-w`) to select the flavor.  
+When omitted, `basic` is assumed.
+
+```bash
+# Apply the compliance use-case (basic workflow)
+./mdai.sh use-case compliance --version 0.8.6
+
+# Static workflow
+./mdai.sh use-case compliance --version 0.8.6 --workflow static
+
+# Dynamic workflow
+./mdai.sh use-case compliance --version 0.8.6 -w dynamic
+```
+
+**File resolution priority** (for both hub & otel):
+
+```
+<version>/use_cases/<case>/<workflow>/{hub.yaml,otel.yaml}
+<version>/use_cases/<case>/{hub.yaml,otel.yaml}
+```
+> Explicit `--hub` / `--otel` arguments still override all.
+
 ## Individual components
 
 ```bash

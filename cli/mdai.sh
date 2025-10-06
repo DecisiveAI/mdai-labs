@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+WORKFLOW="${WORKFLOW:-static}"
 set -euo pipefail
 
 # ---- Safe initializations for Bash 3.2 + `set -u` ----
@@ -807,24 +808,24 @@ cmd_compliance() {
   done
 
   # Preferred (versioned) layout:
-  #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/otel.yaml
-  #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/hub.yaml
+  #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/basic/otel.yaml
+  #   ${USE_CASES_ROOT}/${version}/use_cases/compliance/basic/hub.yaml
   # Fallbacks:
-  #   ./use_cases/compliance/otel.yaml
-  #   ./use_cases/compliance/hub.yaml
+  #   ./use_cases/compliance/basic/otel.yaml
+  #   ./use_cases/compliance/basic/hub.yaml
   #   ${OTEL_PATH}/otel_compliance.yaml
   #   ${MDAI_PATH}/hub/hub_compliance.yaml
   if [[ -z "$otel_f" ]]; then
     local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/compliance/otel.yaml" || c1=""
-    c2="./use_cases/compliance/otel.yaml"
+    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/compliance/basic/otel.yaml" || c1=""
+    c2="./use_cases/compliance/basic/otel.yaml"
     c3="${OTEL_PATH}/otel_compliance.yaml"
     otel_f="$(first_existing "$c1" "$c2" "$c3")"
   fi
   if [[ -z "$hub_f" ]]; then
     local c1 c2 c3
-    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/compliance/hub.yaml" || c1=""
-    c2="./use_cases/compliance/hub.yaml"
+    [[ -n "$version" ]] && c1="${USE_CASES_ROOT}/${version}/use_cases/compliance/basic/hub.yaml" || c1=""
+    c2="./use_cases/compliance/basic/hub.yaml"
     c3="${MDAI_PATH}/hub/hub_compliance.yaml"
     hub_f="$(first_existing "$c1" "$c2" "$c3")"
   fi
@@ -1009,6 +1010,7 @@ GLOBAL FLAGS:
   -h, --help                 Show help
 
 COMMANDS:
+  use_case NAME [--version VER] [--hub FILE] [--otel FILE] [--workflow basic|static|dynamic] [--debug-resolve]
 
 INSTALL / UPGRADE
   install                        Create Kind deps then install MDAI (alias: install_deps + install_mdai)
@@ -1196,6 +1198,11 @@ main() {
 # Unified use-case runner:
 #   ./mdai.sh use-case <pii|compliance|df|tail-sampling> [--version VER] [--hub PATH] [--otel PATH] [--apply FILE ...] [--delete]
 cmd_use_case() {
+  case "$WORKFLOW" in
+    basic|static|dynamic) ;;
+    ""|*) echo "❌ invalid --workflow '$WORKFLOW' (choose: basic|static|dynamic)"; return 1 ;;
+  esac
+
   act_check_tools_and_context
   local case_name="${1:-}"; shift || true
   if [[ -z "$case_name" ]]; then
@@ -1217,6 +1224,22 @@ cmd_use_case() {
       --apply)   shift; extras+=("${1:?}"); shift ;;
       --delete)  DO_DELETE=true; shift ;;
       --) shift; break ;;
+      --workflow=*)
+        WORKFLOW="${1#*=}"
+        shift
+        ;;
+      --workflow|-w)
+        if [[ $# -lt 2 ]]; then
+          echo "❌ --workflow requires a value (basic|static|dynamic)"; return 1
+        fi
+        shift
+        WORKFLOW="$1"
+        shift
+        ;;
+      --debug-resolve)
+        DEBUG_RESOLVE=1
+        shift
+        ;;
       *) err "use-case: unknown flag '$1'"; return 1 ;;
     esac
   done
@@ -1237,33 +1260,47 @@ cmd_use_case() {
 
   resolve_uc_file() {
     local want="$1"  # "hub" or "otel"
+    local flavor="${WORKFLOW:-static}"
     local casedir1="" casedir2=""
+
     if [[ -n "$version" ]]; then
       casedir1="${USE_CASES_ROOT}/${version}/use-cases/${case_name}"
       casedir2="${USE_CASES_ROOT}/${version}/use_cases/${case_name}"
     fi
+
     local local1="./use-cases/${case_name}"
     local local2="./use_cases/${case_name}"
     local fname="${want}.yaml"
-    case "$want" in
-      hub)
-        first_existing \
-          "${casedir1}/${fname}" "${casedir2}/${fname}" \
-          "${local1}/${fname}"   "${local2}/${fname}"   \
-          "${MDAI_PATH}/hub/hub_${case_name}.yaml" \
-          "${MDAI_PATH}/hub/hub_${case_name//-/_}.yaml" \
-          "${MDAI_PATH}/hub/hub_${case_name//_/-}.yaml"
-        ;;
-      otel)
-        first_existing \
-          "${casedir1}/${fname}" "${casedir2}/${fname}" \
-          "${local1}/${fname}"   "${local2}/${fname}"   \
-          "${OTEL_PATH}/otel_${case_name}.yaml" \
-          "${OTEL_PATH}/otel_${case_name//-/_}.yaml" \
-          "${OTEL_PATH}/otel_${case_name//_/-}.yaml"
-        ;;
-    esac
+
+    # Build candidates: flavored paths first, then non-flavored, then fallbacks
+    local -a CANDIDATES=(
+      "${casedir1}/${flavor}/${fname}"
+      "${casedir2}/${flavor}/${fname}"
+      "${local1}/${flavor}/${fname}"
+      "${local2}/${flavor}/${fname}"
+      "${casedir1}/${fname}"
+      "${casedir2}/${fname}"
+      "${local1}/${fname}"
+      "${local2}/${fname}"
+    )
+
+    if [[ "$want" == "hub" ]]; then
+      CANDIDATES+=(
+        "${MDAI_PATH}/hub/hub_${case_name}.yaml"
+        "${MDAI_PATH}/hub/hub_${case_name//-/_}.yaml"
+        "${MDAI_PATH}/hub/hub_${case_name//_/-}.yaml"
+      )
+    else
+      CANDIDATES+=(
+        "${OTEL_PATH}/otel_${case_name}.yaml"
+        "${OTEL_PATH}/otel_${case_name//-/_}.yaml"
+        "${OTEL_PATH}/otel_${case_name//_/-}.yaml"
+      )
+    fi
+
+    first_existing "${CANDIDATES[@]}"
   }
+
 
   [[ -z "$hub_f"  ]]  && hub_f="$(resolve_uc_file hub || true)"
   [[ -z "$otel_f" ]]  && otel_f="$(resolve_uc_file otel || true)"
@@ -1301,6 +1338,9 @@ if [[ -z "$data_f" ]]; then
 fi
 
   if [[ -z "$hub_f" || -z "$otel_f" ]]; then
+
+  info "hub_f: $hub_f otel_f: $otel_f"
+
     err "use-case: could not resolve files (hub:'$hub_f' otel:'$otel_f'). Try --hub and/or --otel."
     return 1
   fi
