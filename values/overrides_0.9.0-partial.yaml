@@ -17,15 +17,16 @@ mdai-operator:
 
 kubeprometheusstack:
   grafana:
-    # sidecar:
-    #   dashboards:
-    #     enabled: true
-    #     label: grafana_dashboard
-    #     searchNamespace: ALL
-    #     folder: /var/lib/files/dashboards/default
     enabled: true
-    defaultDashboardsEnabled: false
     adminPassword: mdai
+    defaultDashboardsEnabled: false
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        searchNamespace: ALL
+        folder: /var/lib/files/dashboards/default
+
     # plugins:
     #   - yesoreyeram-infinity-datasource
     # datasources:
@@ -50,7 +51,7 @@ kubeprometheusstack:
     #         editable: true
     #         options:
     #           path: /var/lib/grafana/dashboards/default
-    # dashboards:
+    dashboards: {}
     #   default: {}
     #     # mdai-dashboard: {} # files/dashboards/mdai-dashboard.json
     #     # mdai-resource-use: {} # files/dashboards/mdai-resource-use.json
