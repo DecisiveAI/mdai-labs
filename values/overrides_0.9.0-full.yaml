@@ -77,21 +77,23 @@ mdai-operator:
   controllerManager:
     manager:
       env:
+        otelSdkDisabled: "true"
         otelExporterOtlpEndpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
 
 mdai-gateway:
   enabled: true
   otelExporterOtlpEndpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
-  # otelSdkDisabled: "true"
+  otelSdkDisabled: "true"
 
 mdai-event-hub:
   enabled: true
   otelExporterOtlpEndpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
+  otelSdkDisabled: true
   deployment:
     replicas: 1 # adjust as per your requirement, 1 - 3 replicas recommended
 
 mdai-s3-logs-reader:
-  enabled: true
+  enabled: false
   awsRegion: "us-east-1"
   s3Bucket: "mdai-collector-logs"
   awsAccessKeySecret: aws-credentials
@@ -109,7 +111,17 @@ kubeprometheusstack:
       monitor:
         enabled: false
   grafana:
-    enabled: false
+    enabled: true
+    adminPassword: mdai
+    defaultDashboardsEnabled: false
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        searchNamespace: ALL
+        folder: /var/lib/grafana/dashboards/default
+    dashboards: {}
+
   alertmanager:
     enabled: true
     config:
@@ -527,8 +539,6 @@ nats:
           secretKeyRef:
             name: nats-secret
             key: NATS_PASSWORD
-
-
 
 crdMetadata:
   fieldValue: ""

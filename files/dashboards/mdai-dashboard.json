@@ -92,7 +92,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 9,
   "links": [],
   "panels": [
     {
@@ -640,12 +639,12 @@
         ]
       },
       "gridPos": {
-        "h": 11,
+        "h": 9,
         "w": 24,
         "x": 0,
         "y": 14
       },
-      "id": 25,
+      "id": 11,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -674,7 +673,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "label_replace(\n  sum by ($groupByLabel) (increase($receiverMetric{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",          \n  \"$groupByLabel\",\n  \"(.*)\"       \n)",
+          "expr": "label_replace(\n  sum by ($groupByLabel) (increase($receiverMetric{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$attribute\",          \n  \"$groupByLabel\",\n  \"(.*)\"       \n)",
           "format": "table",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
@@ -691,7 +690,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "label_replace(\n  sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)",
+          "expr": "label_replace(\n  sum by($groupByLabel) (increase($receiverMetricByBytes{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$attribute\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)",
           "format": "table",
           "fullMetaSearch": false,
           "hide": false,
@@ -709,7 +708,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "label_replace(\n  sum by($groupByLabel) (increase($exporterMetric{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$1\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)",
+          "expr": "label_replace(\n  sum by($groupByLabel) (increase($exporterMetric{data_type=\"$dataType\"}[$__rate_interval:])),\n  \"service\",\n  \"$attribute\",\n  \"$groupByLabel\",\n  \"(.*)\"\n)",
           "format": "table",
           "fullMetaSearch": false,
           "hide": false,
@@ -798,6 +797,9 @@
                 "operation": "aggregate"
               },
               "service": {
+                "aggregations": []
+              },
+              "service_name": {
                 "aggregations": [],
                 "operation": "groupby"
               }
@@ -949,7 +951,7 @@
         "h": 16,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 23
       },
       "id": 24,
       "options": {
@@ -985,6 +987,21 @@
         }
       ],
       "title": "Top Talkers Recieved $dataType Totals",
+      "transformations": [
+        {
+          "disabled": true,
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time",
+                "service1234",
+                "service4321"
+              ]
+            }
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
@@ -1060,7 +1077,7 @@
               {
                 "id": "color",
                 "value": {
-                  "mode": "continuous-BlPu",
+                  "mode": "palette-classic-by-name",
                   "seriesBy": "last"
                 }
               }
@@ -1072,7 +1089,7 @@
         "h": 16,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 23
       },
       "id": 23,
       "options": {
@@ -1108,6 +1125,21 @@
         }
       ],
       "title": "Top Talkers Sent $dataType Totals",
+      "transformations": [
+        {
+          "disabled": true,
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time",
+                "service1234",
+                "service4321"
+              ]
+            }
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
@@ -1116,7 +1148,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 39
       },
       "id": 19,
       "panels": [],
@@ -1133,7 +1165,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 42
+        "y": 40
       },
       "id": 20,
       "options": {
@@ -1315,17 +1347,17 @@
       {
         "current": {
           "selected": false,
-          "text": "mdai_service",
-          "value": "mdai_service"
+          "text": "",
+          "value": ""
         },
         "hide": 0,
         "label": "Group By Label",
         "name": "groupByLabel",
         "options": [
           {
-            "selected": true,
-            "text": "mdai_service",
-            "value": "mdai_service"
+            "selected": false,
+            "text": "",
+            "value": ""
           }
         ],
         "query": "",

@@ -40,7 +40,7 @@ spec:
         error_mode: ignore
         logs:
           log_record:
-            - 'IsMatch(attributes["mdai_service"], "service1|service4321") and IsMatch(attributes["level"], "INFO|DEBUG|WARN")'
+            - 'IsMatch(attributes["mdai_service"], "service1|service1234") and IsMatch(attributes["level"], "INFO|DEBUG|WARN")'
 
     exporters:
       debug/filtered: { }
