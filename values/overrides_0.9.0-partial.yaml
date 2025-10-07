@@ -52,9 +52,9 @@ kubeprometheusstack:
               path: /var/lib/grafana/dashboards/default
     dashboards:
       default:
-        mdai-dashboard: files/dashboards/mdai-dashboard.json
-        mdai-resource-use: files/dashboards/mdai-resource-use.json
-        otel-collector:  files/dashboards/otel-collector.json
-        mdai-cluster-usage: files/dashboards/mdai-cluster-usage.json
-        mdai-audit-streams: files/dashboards/mdai-audit-streams.json
-        controller-runtime-metrics: files/dashboards/controller-runtime-metrics.json
+        mdai-dashboard: {}
+        mdai-resource-use: {}
+        otel-collector:  {}
+        mdai-cluster-usage: {}
+        mdai-audit-streams: {}
+        controller-runtime-metrics: {}
