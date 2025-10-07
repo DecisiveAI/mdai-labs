@@ -1,0 +1,57 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    mydecisive.ai/hub-name: mdaihub-ddf
+  name: gateway
+  namespace: mdai
+spec:
+  managementState: managed
+  image: otel/opentelemetry-collector-contrib:0.127.0
+  replicas: 1
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+  config:
+    receivers:
+      fluentforward:
+        endpoint: "0.0.0.0:8006"
+
+    extensions:
+      health_check:
+        endpoint: "${env:MY_POD_IP}:13133"
+
+    processors:
+      memory_limiter:
+        check_interval: 23s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+      batch:
+        send_batch_size: 1000
+        send_batch_max_size: 10000
+        timeout: 13s
+
+    exporters:
+      debug: {}
+
+    service:
+      telemetry:
+        resource:
+          mdai-logstream: collector
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: "0.0.0.0"
+                    port: 8888
+      extensions: [health_check]
+      pipelines:
+        logs/customer_pipeline:
+          receivers: [fluentforward]
+          processors: [memory_limiter, batch]
+          exporters: [debug]

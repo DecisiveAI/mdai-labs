@@ -1,0 +1,9 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiCollector
+metadata:
+  namespace: mdai
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: hub-monitor
+spec:
