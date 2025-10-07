@@ -72,17 +72,18 @@ mdai-operator:
     autoGenerateCert:
       enabled: false
       recreate: false
-      certPeriodDays: 365        # otelSdkDisabled: "true"
+      certPeriodDays: 365
   fullnameOverride: mdai-operator
   controllerManager:
     manager:
       env:
+        otelSdkDisabled: "true"
         otelExporterOtlpEndpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
 
 mdai-gateway:
   enabled: true
   otelExporterOtlpEndpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
-  # otelSdkDisabled: "true"
+  otelSdkDisabled: "true"
 
 mdai-event-hub:
   enabled: true
@@ -91,7 +92,7 @@ mdai-event-hub:
     replicas: 1 # adjust as per your requirement, 1 - 3 replicas recommended
 
 mdai-s3-logs-reader:
-  enabled: true
+  enabled: false
   awsRegion: "us-east-1"
   s3Bucket: "mdai-collector-logs"
   awsAccessKeySecret: aws-credentials
@@ -110,6 +111,43 @@ kubeprometheusstack:
         enabled: false
   grafana:
     enabled: false
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        searchNamespace: ALL
+        folder: /var/lib/grafana/dashboards/default
+    # change value to true if you'd like to install grafana dashboards
+    enabled: true
+    # uncomment the values below if grafana is enabled to view the MDAI dashboards
+    defaultDashboardsEnabled: false
+    adminPassword: mdai
+    plugins:
+      - yesoreyeram-infinity-datasource
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: DS_INFINTYJSON
+            id: DS_INFINTYJSON
+            type: yesoreyeram-infinity-datasource
+            access: proxy
+            jsonData:
+              dataSourceType: json
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: 'default'
+            orgId: 1
+            folder: ''
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+    dashboards:
+      default: {}
   alertmanager:
     enabled: true
     config:

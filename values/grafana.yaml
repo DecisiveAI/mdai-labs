@@ -1,20 +1,3 @@
-mdai-s3-logs-reader:
-  enabled: false
-
-mdai-event-hub:
-  otelSdkDisabled: true
-
-mdai-gateway:
-  enabled: true
-  otelExporterOtlpEndpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
-  otelSdkDisabled: true
-
-mdai-operator:
-  controllerManager:
-    manager:
-      env:
-        otelSdkDisabled: "true"
-
 kubeprometheusstack:
   grafana:
     enabled: true
