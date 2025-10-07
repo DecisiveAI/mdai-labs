@@ -73,7 +73,7 @@ spec:
       debug/filtered: { }
       debug/observed: { }
       otlp/observer:
-        endpoint: mdaihub-ddf-observer-collector-service.mdai.svc.cluster.local:4317
+        endpoint: ddf-mdai-observer-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
 
