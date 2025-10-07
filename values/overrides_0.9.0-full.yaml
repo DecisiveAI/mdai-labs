@@ -110,7 +110,7 @@ kubeprometheusstack:
       monitor:
         enabled: false
   grafana:
-    enabled: false
+    enabled: true
     sidecar:
       dashboards:
         enabled: true
