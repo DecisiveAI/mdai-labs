@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mdai-logger
+  namespace: mdai
+  labels:
+    app.kubernetes.io/name: mdai-logger
+    app.kubernetes.io/part-of: mdai-log-generator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mdai-logger
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mdai-logger
+        app.kubernetes.io/part-of: mdai-log-generator
+    spec:
+      containers:
+        - name: mdai-logger
+          image: busybox
+          resources:
+            limits:
+              memory: "16Mi"
+              cpu: "50m"
+            requests:
+              memory: "8Mi"
+              cpu: "25m"
+          env:
+            - name: LOG_MESSAGE
+              value: The algorithm successfully executed, triggering neural pathways and producing a burst of optimized data streams.
+            - name: LOG_MIN_INTERVAL
+              value: "1"  # minimum interval in seconds
+            - name: LOG_MAX_INTERVAL
+              value: "5"  # maximum interval in seconds
+            - name: LOG_MIN_COUNT
+              value: "1"
+            - name: LOG_MAX_COUNT
+              value: "25"
+            - name: SERVICE_COUNT
+              value: "50"
+          command:
+            - /bin/sh
+            - -c
+            - |
+                LEVELS="ERROR WARNING INFO"
+                TEAM_NAMES="C D E F G H I J K L M N O P Q R S T U V W X Y Z"
+                TEAM_NAMES_ARRAY=$(echo $TEAM_NAMES | tr ' ' '\n')  # convert to array by newline
+                while true; do
+                  COUNT=$(( (RANDOM % (${LOG_MAX_COUNT} - ${LOG_MIN_COUNT} + 1)) + ${LOG_MIN_COUNT} ))
+                  INTERVAL=$(( (RANDOM % (${LOG_MAX_INTERVAL} - ${LOG_MIN_INTERVAL} + 1)) + ${LOG_MIN_INTERVAL} ))
+                  for i in $(seq 1 $COUNT); do
+                    LOG_LEVEL=$(echo $LEVELS | awk -v idx=$((RANDOM % 3 + 1)) '{print $idx}')
+                    RANDOM_NUMBER=$((RANDOM % ${SERVICE_COUNT}))
+                    SERVICE_NAME="${RANDOM_NUMBER}"
+                    # Get a random team name by using awk
+                    TEAM_NAME=$(echo "$TEAM_NAMES_ARRAY" | awk -v idx=$((RANDOM % 26 + 1)) 'NR == idx {print $0}')
+                    echo "$(date -Iseconds) - service${SERVICE_NAME} - team${TEAM_NAME} - us-east-1 - ${LOG_LEVEL} - ${LOG_MESSAGE}"
+                  done
+                  sleep $INTERVAL
+                done

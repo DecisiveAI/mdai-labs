@@ -1,0 +1,56 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-compliance
+  namespace: mdai
+spec:
+  variables:
+    - key: level_list
+      serializeAs:
+        - name: "LEVEL_REGEX"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+      # below properties are optional
+      dataType: set
+      storageType: "mdai-valkey"
+
+  observers:
+    - name: observer-in
+      resourceRef: observer-collector
+      labelResourceAttributes:
+        - level
+      countMetricName: items_received_by_service_total
+      bytesMetricName: bytes_received_by_service_total
+      filter:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["observer_direction"] != "received"'
+    - name: observer-out
+      resourceRef: observer-collector
+      labelResourceAttributes:
+        - level
+      countMetricName: items_sent_by_service_total
+      bytesMetricName: bytes_sent_by_service_total
+      filter:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["observer_direction"] != "exported"'
+
+  observerResources:
+    - name: observer-collector
+      image: public.ecr.aws/decisiveai/observer-collector:0.1
+      ownLogsOtlpEndpoint: mdaihub-compliance-observer-collector-service.mdai.svc.cluster.local:4318
+      resources:
+        limits:
+          memory: "512Mi"
+          cpu: "200m"
+        requests:
+          memory: "128Mi"
+          cpu: "100m"

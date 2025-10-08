@@ -1,0 +1,141 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-pii
+  namespace: mdai
+spec:
+  variables:
+    - key: fields_to_redact
+      type: manual
+      serializeAs:
+        - name: "FIELDS_TO_REDACT"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+      dataType: set
+      storageType: "mdai-valkey"
+
+    - key: fields_to_hash
+      type: manual
+      serializeAs:
+        - name: "FIELDS_TO_HASH"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+      dataType: set
+      storageType: "mdai-valkey"
+
+    # replace fns
+
+    - key: cc_replace_fn
+      type: manual
+      # defaultValue: replace_pattern(attributes["cc"], "\\b(?:\\d[ -]*?){0,12}(\\d{4})\\b", "****-****-****-$1")
+      serializeAs:
+        - name: "CC_REPLACE_FN"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    # regex patterns
+
+    - key: email_regex
+      type: manual
+      # defaultValue: "\\b(?:\\d[ -]*?){0,12}(\\d{4})\\b"
+      serializeAs:
+        - name: "EMAIL_REGEX"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: cc_regex
+      type: manual
+      # defaultValue: "\\b(?:\\d[ -]*?){0,12}(\\d{4})\\b"
+      serializeAs:
+        - name: "CC_REGEX"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: phone_regex
+      type: manual
+      # defaultValue: "\\b(?:\\+?1[-.\\s]?)?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?(\\d{4})\\b"
+      serializeAs:
+        - name: "PHONE_REGEX"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: address_regex
+      type: manual
+      # defaultValue: "\\b(\\d{1,5})\\s([\\w\\s]+),\\s([\\w\\s]+),\\s([A-Z]{2})\\s(\\d{5})\\b"
+      serializeAs:
+        - name: "ADDRESS_REGEX"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: ssn_regex
+      type: manual
+      # defaultValue: "\\b\\d{3}-\\d{2}-(\\d{4})\\b"
+      serializeAs:
+        - name: "SSN_REGEX"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: name_regex
+      type: manual
+      # defaultValue: ".*"
+      serializeAs:
+        - name: "NAME_REGEX"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    # replace templates
+
+    - key: email_template
+      type: manual
+      # defaultValue: "$1***@$2**.***"
+      serializeAs:
+        - name: "EMAIL_TEMPLATE"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: cc_template
+      type: manual
+      # defaultValue: "****-****-****-$1"
+      serializeAs:
+        - name: "CC_TEMPLATE"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: phone_template
+      type: manual
+      # defaultValue:  "***-***-$1")
+      serializeAs:
+        - name: "PHONE_TEMPLATE"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: address_template
+      type: manual
+      # defaultValue: "$1 **** REDACTED"
+      serializeAs:
+        - name: "ADDRESS_TEMPLATE"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: ssn_template
+      type: manual
+      # defaultValue: "***-**-$1"
+      serializeAs:
+        - name: "SSN_TEMPLATE"
+      dataType: string
+      storageType: "mdai-valkey"
+
+    - key: name_template
+      type: manual
+      # defaultValue: "***REDACTED****"
+      serializeAs:
+        - name: "NAME_TEMPLATE"
+      dataType: string
+      storageType: "mdai-valkey"

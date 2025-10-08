@@ -1,0 +1,40 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-compliance
+  namespace: mdai
+spec:
+  variables:
+    - key: non_crit_levels
+      type: manual
+      serializeAs:
+        - name: "NON_CRIT_LEVELS"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+      dataType: set
+      storageType: "mdai-valkey"
+    - key: crit_levels
+      type: manual
+      serializeAs:
+        - name: "CRIT_LEVELS"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+      dataType: set
+      storageType: "mdai-valkey"
+    - key: crit_services
+      type: manual
+      serializeAs:
+        - name: "CRIT_SERVICES"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+      dataType: set
+      storageType: "mdai-valkey"

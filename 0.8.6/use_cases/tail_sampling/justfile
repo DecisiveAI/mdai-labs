@@ -1,0 +1,37 @@
+setup-datadog-agent:
+    helm repo add datadog https://helm.datadoghq.com
+    helm install datadog-operator datadog/datadog-operator
+    kubectl apply -f datadog-agent.yaml
+
+setup-prometheus:
+    kubectl apply -f prometheus/
+
+dynamic-bucketing-tracegen:
+    kubectl apply -f dynamic_bucketing/telemetry_jobs/
+
+static-bucketing-tracegen:
+    kubectl apply -f static_bucketing/telemetry_jobs/
+
+setup-otel-dynamic-bucketing:
+    kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+    kubectl apply -f dynamic_bucketing/otel/
+
+setup-otel-static-bucketing:
+    kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+    kubectl apply -f dynamic_bucketing/otel/
+
+setup-k8s:
+    kubectl apply -f k8s/
+
+setup-mdai-dynamic-bucketing:
+    helm upgrade --install \
+      --repo https://charts.mydecisive.ai \
+      --namespace mdai \
+      --create-namespace \
+      --cleanup-on-fail \
+      mdai mdai-hub --version v0.8.0-dev --set opentelemetry-operator.enabled=false
+    kubectl apply -f dynamic_bucketing/mdai/hub.yaml
+
+setup-static: setup-k8s setup-prometheus setup-otel-static-bucketing setup-datadog-agent static-bucketing-tracegen
+
+setup-dynamic: setup-k8s setup-mdai-dynamic-bucketing setup-prometheus setup-otel-dynamic-bucketing setup-datadog-agent dynamic-bucketing-tracegen

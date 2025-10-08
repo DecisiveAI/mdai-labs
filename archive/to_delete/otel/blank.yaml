@@ -1,0 +1,110 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    mydecisive.ai/hub-name: mdaihub-sample
+  name: gateway
+  namespace: mdai
+spec:
+  managementState: managed
+  image: otel/opentelemetry-collector-contrib:latest
+  replicas: 1
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+  envFrom:
+    - configMapRef:
+        name: mdaihub-sample-variables
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: '${env:MY_POD_IP}:4317'
+          http:
+            endpoint: '${env:MY_POD_IP}:4318'
+            # Since this collector needs to receive data from the web, enable cors for all origins
+            # `allowed_origins` can be refined for your deployment domain
+            cors:
+              allowed_origins:
+                - "http://*"
+                - "https://*"
+
+    extensions:
+      # The health_check extension is mandatory for this chart.
+      # Without the health_check extension the collector will fail the readiness and liveliness probes.
+      # The health_check extension can be modified, but should never be removed.
+      health_check:
+        endpoint: "${env:MY_POD_IP}:13133"
+
+    processors:
+      memory_limiter:
+        check_interval: 23s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+      batch:
+        send_batch_size: 1000
+        send_batch_max_size: 10000
+        timeout: 13s
+
+    exporters:
+      debug: { }
+
+    service:
+      telemetry:
+        resource:
+          mdai-logstream: collector
+        metrics:
+          address: ":8888"
+      extensions:
+        - health_check
+      pipelines:
+        logs/customer_pipeline:
+          receivers: [ otlp ]
+          processors: [
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ debug ]
+
+        logs/watch_receivers:
+          receivers: [ otlp ]
+          processors: [
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ debug ]
+
+  # ingress:
+  #   annotations:
+  #     alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-west-2:858610460269:certificate/7fff4e10-9c0a-4bcf-8bdf-19fa0669a815"
+  #     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+  #     alb.ingress.kubernetes.io/load-balancer-name: mdai-grpc-endpoint
+  #     alb.ingress.kubernetes.io/backend-protocol-version: GRPC
+  #     alb.ingress.kubernetes.io/scheme: internal
+  #     alb.ingress.kubernetes.io/target-type: ip
+  #     kubernetes.io/ingress.class: alb
+  #   grpcService:
+  #     type: NodePort
+  #   nonGrpcService:
+  #     type: LoadBalancer
+  #     annotations:
+  #       external-dns.alpha.kubernetes.io/hostname: mdai-gw.test.shared.chegg.services
+  #       service.beta.kubernetes.io/aws-load-balancer-name: mdai-non-grpc-endpoint
+  #       service.beta.kubernetes.io/aws-load-balancer-type: external
+  #       service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+  #       service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+  #       service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
+  #       service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-west-2:858610460269:certificate/7fff4e10-9c0a-4bcf-8bdf-19fa0669a815"
+  #   type: aws
+  #   collectorEndpoints:
+  #     otlp: otlp.mdai.io

@@ -1,0 +1,147 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    mdaihub-name: mdaihub-sample
+    mydecisive.ai/hub-name: mdaihub-sample
+  name: gateway
+  namespace: mdai
+spec:
+  managementState: managed
+  image: otel/opentelemetry-collector-contrib:0.118.0
+  replicas: 1
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+  envFrom:
+    - configMapRef:
+        name: mdaihub-sample-variables
+  config:
+    receivers:
+      fluentforward:
+        endpoint: '${env:MY_POD_IP}:8006'
+      otlp:
+        protocols:
+          grpc:
+            endpoint: '${env:MY_POD_IP}:4317'
+          http:
+            endpoint: '${env:MY_POD_IP}:4318'
+            # Since this collector needs to receive data from the web, enable cors for all origins
+            # `allowed_origins` can be refined for your deployment domain
+            cors:
+              allowed_origins:
+                - "http://*"
+                - "https://*"
+
+    extensions:
+      # The health_check extension is mandatory for this chart.
+      # Without the health_check extension the collector will fail the readiness and liveliness probes.
+      # The health_check extension can be modified, but should never be removed.
+      health_check:
+        endpoint: "${env:MY_POD_IP}:13133"
+
+    processors:
+      memory_limiter:
+        check_interval: 23s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+      batch:
+        send_batch_size: 1000
+        send_batch_max_size: 10000
+        timeout: 13s
+
+      groupbyattrs:
+        keys:
+          - mdai_service
+
+      resource/observer_receiver_tag:
+        attributes:
+          - key: observer_direction
+            value: "received"
+            action: upsert
+
+      resource/observer_exporter_tag:
+        attributes:
+          - key: observer_direction
+            value: "exported"
+            action: upsert
+
+      # UNCOMMENT THE FOLLOWING LINE TO ADD FILTER PROCESSOR
+      # filter/service_list:
+      #   error_mode: ignore
+      #   logs:
+      #     log_record:
+      #       - 'IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
+
+    exporters:
+      debug: { }
+      otlp/observer:
+        endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+    service:
+      telemetry:
+        resource:
+          mdai-logstream: collector
+        metrics:
+          address: ":8888"
+      extensions:
+        - health_check
+      pipelines:
+        logs/customer_pipeline:
+          receivers: [ otlp, fluentforward ]
+          processors: [
+            # UNCOMMENT THE FOLLOWING LINE TO START FILTRATION
+            # filter/service_list,
+            # DO NOT CHANGE ORDER
+            resource/observer_exporter_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ debug, otlp/observer ]
+
+        logs/watch_receivers:
+          receivers: [ otlp, fluentforward ]
+          processors: [
+            resource/observer_receiver_tag,
+            groupbyattrs,
+            memory_limiter,
+            # DO NOT CHANGE ORDER
+            # batch must be last in processor list
+            batch
+          ]
+          exporters: [ debug, otlp/observer ]
+
+  ingress:
+    annotations:
+      alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:218452949296:certificate/8cb39f25-eff3-4471-8eda-209fbd515b9c"
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/load-balancer-name: mdai-grpc-endpoint
+      alb.ingress.kubernetes.io/backend-protocol-version: GRPC
+      alb.ingress.kubernetes.io/scheme: internal
+      alb.ingress.kubernetes.io/target-type: ip
+      kubernetes.io/ingress.class: alb
+    grpcService:
+      type: NodePort
+    nonGrpcService:
+      type: LoadBalancer
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: mdai-gw.test.shared.chegg.services
+        service.beta.kubernetes.io/aws-load-balancer-name: mdai-non-grpc-endpoint
+        service.beta.kubernetes.io/aws-load-balancer-type: external
+        service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+        service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
+        service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:218452949296:certificate/8cb39f25-eff3-4471-8eda-209fbd515b9c"
+    type: aws
+    collectorEndpoints:
+      otlp: otlp.mdai.io

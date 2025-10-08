@@ -1,0 +1,48 @@
+mdai-s3-logs-reader:
+  enabled: false
+
+mdai-event-hub:
+  otelSdkDisabled: true
+
+mdai-gateway:
+  enabled: true
+  otelExporterOtlpEndpoint: http://hub-monitor-mdai-collector-service.mdai.svc.cluster.local:4318
+  otelSdkDisabled: true
+
+mdai-operator:
+  controllerManager:
+    manager:
+      env:
+        otelSdkDisabled: "true"
+
+kubeprometheusstack:
+  grafana:
+    enabled: true
+    defaultDashboardsEnabled: false
+    adminPassword: mdai
+    plugins:
+      - yesoreyeram-infinity-datasource
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: DS_INFINTYJSON
+            id: DS_INFINTYJSON
+            type: yesoreyeram-infinity-datasource
+            access: proxy
+            jsonData:
+              dataSourceType: json
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: 'default'
+            orgId: 1
+            folder: ''
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+    dashboards:
+      default: {}

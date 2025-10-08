@@ -1,0 +1,63 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-ddf
+  namespace: mdai
+spec:
+  variables:
+    - key: service_list
+      serializeAs:
+        - name: "SERVICE_LIST_REGEX"
+          transformers:
+            - type: join
+              join:
+                delimiter: "|"
+      dataType: set
+      storageType: "mdai-valkey"
+    - key: alerting_data_type
+      dataType: string
+      serializeAs:
+        - name: "ALERTING_DATA_TYPE"
+    - key: alerting_triggered
+      dataType: boolean
+      serializeAs:
+        - name: "ALERT_TRIGGERED"
+
+  prometheusAlerts:
+    - name: top_talkers
+      expr: 'sum(increase(bytes_received_by_service_total{mdai_service!=""}[1m])) by (mdai_service, data_type) > 800*1024'
+      severity: warning
+      for: 1m
+      keep_firing_for: 1m
+    - name: top_listeners
+      expr: 'sum(increase(bytes_sent_by_service_total{mdai_service!=""}[1h])) by (mdai_service, data_type) > 10*1024*1024'
+      severity: warning
+      for: 15m
+      keep_firing_for: 10m
+
+  rules:
+    - name: top_talkers_resolved
+      when:
+        alertName: top_talkers
+        status: resolved
+      then:
+        - removeFromSet:
+            set: service_list
+            value: ${trigger:payload.labels.mdai_service}
+    - name: top_talkers_firing
+      when:
+        alertName: top_talkers
+        status: firing
+      then:
+        - addToSet:
+            set: service_list
+            value: ${trigger:payload.labels.mdai_service}
+        - setVariable:
+            scalar: alerting_data_type
+            value: ${trigger:payload.labels.data_type}
+        - setVariable:
+            scalar: alerting_triggered
+            value: "true"
