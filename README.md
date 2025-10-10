@@ -2,11 +2,17 @@
 
 A repository full of reference solutions for getting started with MDAI.
 
-## Manual Installation (Cluster + MDAI Dependencies)
-
-If you'd like to setup  [Manual Installation](manual-install.md)
-
 ## Automated Install/Uninstall (Cluster + MDAI Dependencies)
+
+Optional: In your .bashrc (or equivalent), add this to EOF. If you choose to do this, you can use `mdai` vs. `./cli/mdai.sh` to utlize the cli-like shell script 
+```
+# Set this to the path of your local clone of mdai-labs
+export MDAI_LABS_DIR="$HOME/path/to/mdai-labs"
+  
+# Set mdai alias
+  
+alias mdai='"${MDAI_LABS_DIR%/}/cli/mdai.sh"'
+```
 
 Run the following to make our install/uninstall script executable.
 ```
@@ -52,8 +58,3 @@ You can use the following commands to setup and install your mdai instance local
 | Install Collector               | `./cli/mdai.sh collector`       | Applies the OpenTelemetry Collector manifest                  |
 | Forward Logs to MDAI via Fluentd| `./cli/mdai.sh fluentd`         | Installs Fluentd Helm chart with log forwarding config        |
 
-### What do to after automated install?
-
-Jump to our docs to see how to use mdai to:
-1. [setup dashboards for mdai monitoring](https://docs.mydecisive.ai/quickstart/dashboard/index.html)
-2. [automate dynamic filtration](https://docs.mydecisive.ai/quickstart/filter/index.html)
