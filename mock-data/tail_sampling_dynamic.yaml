@@ -1,0 +1,147 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: service-a-low-volume
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: telemetrygen
+              image: public.ecr.aws/p3k6k6h3/telemetrygen:current
+              imagePullPolicy: IfNotPresent
+              args:
+                - "traces"
+                - "--otlp-endpoint"
+                - "trace-balancer-collector.mdai.svc.cluster.local:4317"
+                - "--otlp-insecure"
+                - "true"
+                - "--child-spans"
+                - "10"
+                - "--service"
+                - "mdai-test-service-A"
+                - "--span-duration"
+                - "123ms"
+                - "--traces"
+                - "10"
+                - "--telemetry-attributes"
+                - 'operation="low-volume-op"'
+                - "--status-code"
+                - "Ok"
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: service-b-low-volume
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: telemetrygen
+              image: public.ecr.aws/p3k6k6h3/telemetrygen:current
+              imagePullPolicy: IfNotPresent
+              args:
+                - "traces"
+                - "--otlp-endpoint"
+                - "trace-balancer-collector.mdai.svc.cluster.local:4317"
+                - "--otlp-insecure"
+                - "true"
+                - "--child-spans"
+                - "10"
+                - "--service"
+                - "mdai-test-service-B"
+                - "--span-duration"
+                - "123ms"
+                - "--traces"
+                - "10"
+                - "--telemetry-attributes"
+                - 'operation="low-volume-op"'
+                - "--status-code"
+                - "Ok"
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: service-c-high-volume
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: telemetrygen
+              image: public.ecr.aws/p3k6k6h3/telemetrygen:current
+              imagePullPolicy: IfNotPresent
+              args:
+                - "traces"
+                - "--otlp-endpoint"
+                - "trace-balancer-collector.mdai.svc.cluster.local:4317"
+                - "--otlp-insecure"
+                - "true"
+                - "--child-spans"
+                - "3"
+                - "--service"
+                - "mdai-test-service-C"
+                - "--span-duration"
+                - "123ms"
+                - "--traces"
+                - "100"
+                - "--telemetry-attributes"
+                - 'operation="high-volume-op"'
+                - "--status-code"
+                - "Ok"
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: service-d-high-volume
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: telemetrygen
+              image: public.ecr.aws/p3k6k6h3/telemetrygen:current
+              imagePullPolicy: IfNotPresent
+              args:
+                - "traces"
+                - "--otlp-endpoint"
+                - "trace-balancer-collector.mdai.svc.cluster.local:4317"
+                - "--otlp-insecure"
+                - "true"
+                - "--child-spans"
+                - "3"
+                - "--service"
+                - "mdai-test-service-D"
+                - "--span-duration"
+                - "123ms"
+                - "--traces"
+                - "500"
+                - "--telemetry-attributes"
+                - 'operation="high-volume-op"'
+                - "--status-code"
+                - "Ok"
+          restartPolicy: OnFailure

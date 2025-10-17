@@ -4,6 +4,6 @@ metadata:
   labels:
     app.kubernetes.io/name: mdai-operator
     app.kubernetes.io/managed-by: kustomize
-  name: mdaihub-ddf
+  name: mdaihub-ts
   namespace: mdai
 spec:

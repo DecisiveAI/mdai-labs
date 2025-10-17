@@ -1201,7 +1201,10 @@ cmd_use_case() {
   resolve_data_file() {
     # Search order: explicit -> local mock-data -> absolute mock-data
     local cand
+    local flavor="${WORKFLOW:-static}"
     for cand in \
+      "./mock-data/${case_name}_${flavor}.yml" \
+      "./mock-data/${case_name}_${flavor}.yaml" \
       "./mock-data/${case_name}.yaml" \
       "./mock-data/${case_name}.yml" \
       "./mock-data/${case_name}-data.yaml" \
