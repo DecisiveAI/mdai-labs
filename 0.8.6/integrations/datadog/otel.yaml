@@ -17,19 +17,15 @@ spec:
     requests:
       memory: "128Mi"
       cpu: "100m"
+  env:
+  - name: API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: datadog-api-key
+        key: api-key
   config:
     receivers:
-      datadog:
-        endpoint: 0.0.0.0:8126
-        read_timeout: 60s
-        intake:
-          behavior: proxy
-          proxy:
-            api:
-              key: ${API_KEY}
-              site: us5.datadoghq.com
-              fail_on_invalid_key: true
-      otlp:
+      otlp/datadog:
         protocols:
           grpc:
             endpoint: 0.0.0.0:4317
@@ -50,13 +46,6 @@ spec:
         endpoint : 0.0.0.0:13133
 
     processors:
-      datadogsemantics: {}
-
-      transform:
-        error_mode: propagate
-        trace_statements:
-          - set(resource.attributes["datadog.host.name"], span.attributes["nodename"]) where resource.attributes["datadog.host.name"] == ""
-
       memory_limiter:
         check_interval: 23s
         limit_percentage: 75
@@ -65,11 +54,6 @@ spec:
       batch:
         send_batch_size: 5000
         timeout: 10s
-
-    connectors:
-      datadog/connector:
-        traces:
-          trace_buffer: 1000  # default
 
     exporters:
       debug: {}
@@ -89,16 +73,7 @@ spec:
         - health_check
       pipelines:
         logs/datadog:
-          receivers: [datadog]
-          processors: [batch]
-          exporters: [datadog]
-
-        metrics:
-          receivers: [ datadog ]
-          processors: [ batch ]
-          exporters: [ datadog ]
-        metrics/derived:
-          receivers: [datadog/connector]
+          receivers: [otlp/datadog]
           processors: [batch]
           exporters: [datadog]
 
