@@ -18,9 +18,9 @@ spec:
     receivers:
       otlp/from_agent:
         protocols:
-          grpc: 
+          grpc:
             endpoint: '0.0.0.0:4317'
-          http: 
+          http:
             endpoint: '0.0.0.0:4318'
 
     extensions:
@@ -84,7 +84,7 @@ metadata:
 spec:
   managementState: managed
   image: otel/opentelemetry-collector-contrib:0.127.0
-  replicas: 1
+  replicas: 3
   resources:
     limits:
       memory: "512Mi"
@@ -112,7 +112,6 @@ spec:
     exporters:
       debug/to_vendor:
         verbosity: detailed
-      
     service:
       telemetry:
         resource:
