@@ -1,0 +1,104 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    mydecisive.ai/hub-name: mdaihub-dd-logs
+  name: gateway
+  namespace: mdai
+spec:
+  managementState: managed
+  image: otel/opentelemetry-collector-contrib:0.127.0
+  imagePullPolicy: Always
+  replicas: 1
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+  config:
+    receivers:
+      datadog:
+        endpoint: 0.0.0.0:8126
+        read_timeout: 60s
+        intake:
+          behavior: proxy
+          proxy:
+            api:
+              key: ${API_KEY}
+              site: us5.datadoghq.com
+              fail_on_invalid_key: true
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+            # Since this collector needs to receive data from the web, enable cors for all origins
+            # `allowed_origins` can be refined for your deployment domain
+            cors:
+              allowed_origins:
+                - "http://*"
+                - "https://*"
+
+    extensions:
+      # The health_check extension is mandatory for this chart.
+      # Without the health_check extension the collector will fail the readiness and liveliness probes.
+      # The health_check extension can be modified, but should never be removed.
+      health_check:
+        endpoint : 0.0.0.0:13133
+
+    processors:
+      datadogsemantics: {}
+
+      transform:
+        error_mode: propagate
+        trace_statements:
+          - set(resource.attributes["datadog.host.name"], span.attributes["nodename"]) where resource.attributes["datadog.host.name"] == ""
+
+      memory_limiter:
+        check_interval: 23s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+      batch:
+        send_batch_size: 5000
+        timeout: 10s
+
+    connectors:
+      datadog/connector:
+        traces:
+          trace_buffer: 1000  # default
+
+    exporters:
+      debug: {}
+
+      debug/verbose:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+
+      datadog:
+        api:
+          site: us5.datadoghq.com
+          key: ${API_KEY}
+
+    service:
+      extensions:
+        - health_check
+      pipelines:
+        logs/datadog:
+          receivers: [datadog]
+          processors: [batch]
+          exporters: [datadog]
+
+        metrics:
+          receivers: [ datadog ]
+          processors: [ batch ]
+          exporters: [ datadog ]
+        metrics/derived:
+          receivers: [datadog/connector]
+          processors: [batch]
+          exporters: [datadog]
+
