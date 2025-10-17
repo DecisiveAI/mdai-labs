@@ -4,36 +4,59 @@ metadata:
   labels:
     app.kubernetes.io/name: mdai-operator
     app.kubernetes.io/managed-by: kustomize
-  name: mdaihub-ddf
+  name: mdaihub-ts
   namespace: mdai
 spec:
   variables:
-    - key: service_list
+    - key: loud_service_list
       serializeAs:
-        - name: "SERVICE_LIST_REGEX"
+        - name: "LOUD_SERVICE_LIST"
           transformers:
             - type: join
               join:
-                delimiter: "|"
+                delimiter: ","
       dataType: set
-      storageType: "mdai-valkey"
+    - key: super_loud_service_list
+      serializeAs:
+        - name: "SUPER_LOUD_SERVICE_LIST"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      dataType: set
 
   prometheusAlert:
-    - name: top_talkers
-      expr: 'sum(increase(bytes_received_by_service_total{mdai_service!=""}[1m])) by (mdai_service, data_type) > 800*1024'
+    - name: super_loud_services
+      expr: 'sum(increase(trace_span_service_count_total{service_name!=""}[5m])) by (service_name) >= 1000'
       severity: warning
       for: 1m
       keep_firing_for: 1m
-    - name: top_listeners
-      expr: 'sum(increase(bytes_sent_by_service_total{mdai_service!=""}[1h])) by (mdai_service, data_type) > 10*1024*1024'
+    - name: loud_services
+      expr: '1000 > sum(increase(trace_span_service_count_total{service_name!=""}[5m])) by (service_name) >= 200'
       severity: warning
-      for: 15m
-      keep_firing_for: 10m
+      for: 1m
+      keep_firing_for: 1m
 
   automations:
-    - eventRef: top_talkers
+    - eventRef: super_loud_services
       workflow:
+        # remove the service from the other list first
+        - handlerRef: HandleRemoveNoisyServiceFromSet
+          args:
+            payload_val_ref: service_name
+            variable_ref: loud_service_list
         - handlerRef: HandleNoisyServiceAlert
           args:
-            payload_val_ref: mdai_service
-            variable_ref: service_list
+            payload_val_ref: service_name
+            variable_ref: super_loud_service_list
+    - eventRef: loud_services
+      workflow:
+        # remove the service from the other list first
+        - handlerRef: HandleRemoveNoisyServiceFromSet
+          args:
+            payload_val_ref: service_name
+            variable_ref: super_loud_service_list
+        - handlerRef: HandleNoisyServiceAlert
+          args:
+            payload_val_ref: service_name
+            variable_ref: loud_service_list

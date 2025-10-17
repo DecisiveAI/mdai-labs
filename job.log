@@ -1,0 +1,48 @@
+2025-10-17T08:07:00.632Z	INFO	traces/traces.go:52	starting gRPC exporter
+2025-10-17T08:07:00.635Z	INFO	grpc@v1.66.0/clientconn.go:162	[core]original dial target is: "datadog-agent:4317"	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:00.636Z	INFO	grpc@v1.66.0/clientconn.go:440	[core][Channel #1]Channel created	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:00.636Z	INFO	grpc@v1.66.0/clientconn.go:193	[core][Channel #1]parsed dial target is: resolver.Target{URL:url.URL{Scheme:"dns", Opaque:"", User:(*url.Userinfo)(nil), Host:"", Path:"/datadog-agent:4317", RawPath:"", OmitHost:false, ForceQuery:false, RawQuery:"", Fragment:"", RawFragment:""}}	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:00.636Z	INFO	grpc@v1.66.0/clientconn.go:194	[core][Channel #1]Channel authority set to "datadog-agent:4317"	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:00.638Z	INFO	traces/traces.go:114	generation of traces isn't being throttled
+2025-10-17T08:07:00.642Z	INFO	traces/worker.go:112	traces generated	{"worker": 0, "traces": 50}
+2025-10-17T08:07:00.643Z	INFO	traces/traces.go:74	stop the batch span processor
+2025-10-17T08:07:00.645Z	INFO	grpc@v1.66.0/clientconn.go:345	[core][Channel #1]Channel exiting idle mode	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:00.675Z	INFO	grpc@v1.66.0/resolver_wrapper.go:200	[core][Channel #1]Resolver state updated: {
+  "Addresses": null,
+  "Endpoints": [],
+  "ServiceConfig": null,
+  "Attributes": null
+} ()	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:00.676Z	INFO	grpc@v1.66.0/balancer_wrapper.go:107	[core][Channel #1]Channel switches to new LB policy "pick_first"	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:00.676Z	INFO	grpc@v1.66.0/clientconn.go:544	[core][Channel #1]Channel Connectivity change to TRANSIENT_FAILURE	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:02.024Z	INFO	grpc@v1.66.0/resolver_wrapper.go:200	[core][Channel #1]Resolver state updated: {
+  "Addresses": null,
+  "Endpoints": [],
+  "ServiceConfig": null,
+  "Attributes": null
+} ()	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:04.748Z	INFO	grpc@v1.66.0/resolver_wrapper.go:200	[core][Channel #1]Resolver state updated: {
+  "Addresses": null,
+  "Endpoints": [],
+  "ServiceConfig": null,
+  "Attributes": null
+} ()	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:08.258Z	INFO	grpc@v1.66.0/resolver_wrapper.go:200	[core][Channel #1]Resolver state updated: {
+  "Addresses": null,
+  "Endpoints": [],
+  "ServiceConfig": null,
+  "Attributes": null
+} ()	{"system": "grpc", "grpc_log": true}
+2025/10/17 08:07:10 traces export: context deadline exceeded: rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+2025-10-17T08:07:13.533Z	INFO	grpc@v1.66.0/resolver_wrapper.go:200	[core][Channel #1]Resolver state updated: {
+  "Addresses": null,
+  "Endpoints": [],
+  "ServiceConfig": null,
+  "Attributes": null
+} ()	{"system": "grpc", "grpc_log": true}
+2025/10/17 08:07:20 traces export: context deadline exceeded: rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+2025-10-17T08:07:20.653Z	INFO	grpc@v1.66.0/clientconn.go:544	[core][Channel #1]Channel Connectivity change to SHUTDOWN	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:20.653Z	INFO	grpc@v1.66.0/resolver_wrapper.go:100	[core][Channel #1]Closing the name resolver	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:20.653Z	INFO	grpc@v1.66.0/balancer_wrapper.go:145	[core][Channel #1]ccBalancerWrapper: closing	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:20.654Z	INFO	grpc@v1.66.0/clientconn.go:1148	[core][Channel #1]Channel deleted	{"system": "grpc", "grpc_log": true}
+2025-10-17T08:07:20.654Z	INFO	traces/traces.go:64	stopping the exporter
