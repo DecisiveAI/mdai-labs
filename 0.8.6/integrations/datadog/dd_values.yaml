@@ -1,0 +1,53 @@
+datadog:
+  site: us5.datadoghq.com
+  apiKeyExistingSecret: datadog-secret
+  logs:
+    enabled: true
+    # Setting containerCollectAll to true collects logs from ALL containers by default.
+    # If set to false, you MUST use annotations to define which containers to monitor.
+    # Collect ALL container stdout/stderr from the node
+    containerCollectAll: true
+    # (Optional) read from container log files instead of the Docker socket
+    # containerCollectUsingFiles: true
+    # (Optional) bump if you have many containers
+    # openFilesLimit: 1000
+
+  kubelet:
+    tlsVerify: false
+
+  env:
+    - name: DD_HOSTNAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: DD_LOG_LEVEL
+      value: debug
+
+    # logs
+    # your log url as a proxy
+    - name: DD_LOGS_CONFIG_LOGS_DD_URL
+      value: http://dd-otlp-shim.mdai.svc.cluster.local:8080/dd
+    # if your proxy expects HTTP
+    - name: DD_LOGS_CONFIG_USE_HTTP
+      value: true
+    # (Optional) better compression over the wire to Datadog intake
+    - name: DD_LOGS_CONFIG_USE_COMPRESSION
+      value: "true"
+    - name: DD_LOGS_CONFIG_COMPRESSION_LEVEL
+      value: "6"
+
+    # traces
+    # - name: DD_APM_DD_URL
+    #   value: gateway-collector.mdai.svc.cluster.local:8126
+
+    # Tag everything from this cluster (helps search & routing in Datadog)
+    - name: DD_TAGS
+      value: "cluster:mdai env:dev_dd_test"
+
+  # Filter based on Kubernetes metadata labels
+  kubernetes_include:
+  labels:
+    app.kubernetes.io/name: mdai-logger-bundle
+  # pod_name: "^mdai-.*"
+
+

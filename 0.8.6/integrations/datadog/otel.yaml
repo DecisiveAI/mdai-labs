@@ -21,7 +21,7 @@ spec:
   - name: API_KEY
     valueFrom:
       secretKeyRef:
-        name: datadog-api-key
+        name: datadog-secret
         key: api-key
   config:
     receivers:
@@ -63,17 +63,27 @@ spec:
         sampling_initial: 5
         sampling_thereafter: 200
 
-      datadog:
-        api:
-          site: us5.datadoghq.com
-          key: ${API_KEY}
+      # datadog:
+      #   api:
+      #     site: us5.datadoghq.com
+      #     key: ${API_KEY}
 
     service:
+      telemetry:
+        resource:
+          mdai-logstream: collector
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: "0.0.0.0"
+                    port: 8888
       extensions:
         - health_check
       pipelines:
         logs/datadog:
           receivers: [otlp/datadog]
           processors: [batch]
-          exporters: [datadog]
+          exporters: [debug/verbose]
 
