@@ -1,0 +1,30 @@
+datadog:
+  site: us5.datadoghq.com
+  apiKeyExistingSecret: datadog-secret
+  logs:
+    enabled: true
+    # Setting containerCollectAll to true collects logs from ALL containers by default.
+    # If set to false, you MUST use annotations to define which containers to monitor.
+    containerCollectAll: false
+
+  kubelet:
+    tlsVerify: false
+  env:
+    - name: DD_HOSTNAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+
+  # Filter based on Kubernetes metadata labels
+  kubernetes_include:
+    # Include only pods that have the label 'app: my-app-prefix'
+    labels:
+      # by app name
+      app.kubernetes.io/name: mdai-logger-bundle
+      # by name
+      # name: "^mdai-.*"
+
+  # Filter based on the Pod name itself (which is often derived from the Deployment name)
+  # kubernetes_include:
+  #   pod_name: "^mdai-.*"
+
