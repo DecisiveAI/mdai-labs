@@ -54,3 +54,23 @@ curl -i -X POST "http://localhost:8080/dd" \
 ]
 JSON
 ```
+
+
+## Need to make a change to the service?
+
+```bash
+# go to your mdai labs directory
+cd path/to/mdai-labs/0.8.6/integrations/datadog/dd-otlp-shim
+
+# build your `dd-otlp-shim` service
+go build -o dd-otlp-shim
+
+# update the docker image
+docker build -t dd-otlp-shim:dev .
+
+# load the image into your kind cluster
+kind load docker-image dd-otlp-shim:dev --name mdai-labs
+
+# roll out the updated service
+kubectl -n mdai rollout restart deploy dd-otlp-shim
+``

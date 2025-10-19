@@ -20,21 +20,23 @@ datadog:
       valueFrom:
         fieldRef:
           fieldPath: spec.nodeName
-    - name: DD_LOG_LEVEL
-      value: debug
+    # - name: DD_LOG_LEVEL
+    #   value: debug
 
     # logs
     # your log url as a proxy
     - name: DD_LOGS_CONFIG_LOGS_DD_URL
-      value: http://dd-otlp-shim.mdai.svc.cluster.local:8080/dd
+      value: http://dd-otlp-shim.mdai.svc.cluster.local:8080
     # if your proxy expects HTTP
     - name: DD_LOGS_CONFIG_USE_HTTP
       value: true
     # (Optional) better compression over the wire to Datadog intake
     - name: DD_LOGS_CONFIG_USE_COMPRESSION
       value: "true"
+      # value: "false"
     - name: DD_LOGS_CONFIG_COMPRESSION_LEVEL
       value: "6"
+      # value: "1"
 
     # traces
     # - name: DD_APM_DD_URL

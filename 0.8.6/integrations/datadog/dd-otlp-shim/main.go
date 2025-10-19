@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"compress/flate"
 	"compress/gzip"
+	"compress/zlib"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -13,6 +16,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/klauspost/compress/zstd"
 )
 
 type otelAny struct {
@@ -100,8 +105,6 @@ func main() {
 }
 
 func handleDD(w http.ResponseWriter, r *http.Request) {
-	log.Printf("shim recv %s %s, content-encoding=%s", r.Method, r.URL.Path, r.Header.Get("Content-Encoding"))
-
 	if r.Method != http.MethodPost {
 		http.Error(w, "only POST supported", http.StatusMethodNotAllowed)
 		return
@@ -111,22 +114,34 @@ func handleDD(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bodyReader := io.Reader(r.Body)
-	if strings.EqualFold(r.Header.Get("Content-Encoding"), "gzip") {
-		gzr, err := gzip.NewReader(r.Body)
-		if err != nil {
-			http.Error(w, "bad gzip", http.StatusBadRequest)
-			return
-		}
-		defer gzr.Close()
-		bodyReader = gzr
-	}
-	raw, err := io.ReadAll(bodyReader)
+	// Read raw (may be chunked; ReadAll handles it)
+	rawCompressed, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "read error", http.StatusBadRequest)
 		return
 	}
-	events, err := parseDDPayload(raw)
+
+	// Debug: log enc + first bytes
+	encHdr := strings.ToLower(strings.TrimSpace(r.Header.Get("Content-Encoding")))
+	if encHdr == "" {
+		encHdr = strings.ToLower(strings.TrimSpace(r.Header.Get("DD-Content-Encoding")))
+	}
+	first := rawCompressed
+	if len(first) > 16 {
+		first = first[:16]
+	}
+	log.Printf("shim recv %s %s enc=%q dd-enc=%q len=%d head=%s",
+		r.Method, r.URL.Path, r.Header.Get("Content-Encoding"),
+		r.Header.Get("DD-Content-Encoding"), len(rawCompressed), hex.EncodeToString(first))
+
+	// Decompress if needed
+	raw, derr := decompressSmart(rawCompressed, encHdr)
+	if derr != nil {
+		http.Error(w, "decompress error: "+derr.Error(), http.StatusBadRequest)
+		return
+	}
+
+	events, err := parseDDPayload(raw) // tolerant NDJSON version you added earlier
 	if err != nil {
 		http.Error(w, "invalid DD payload: "+err.Error(), http.StatusBadRequest)
 		return
@@ -142,41 +157,137 @@ func handleDD(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("ok\n"))
 }
 
+func decompressSmart(b []byte, enc string) ([]byte, error) {
+	enc = strings.ToLower(strings.TrimSpace(enc))
+
+	// ---- Explicit enc header handling ----
+	switch enc {
+	case "gzip":
+		gr, err := gzip.NewReader(bytes.NewReader(b))
+		if err != nil {
+			return nil, fmt.Errorf("bad gzip: %w", err)
+		}
+		defer gr.Close()
+		return io.ReadAll(gr)
+
+	case "deflate", "zlib":
+		if out, err := tryZlib(b); err == nil {
+			return out, nil
+		}
+		if out, err := tryRawFlate(b); err == nil {
+			return out, nil
+		}
+		return nil, fmt.Errorf("bad deflate (zlib/raw)")
+
+	case "zstd", "zstandard":
+		return tryZstd(b)
+	}
+
+	// ---- No/unknown header: magic-based detection ----
+
+	// zstd magic: 28 B5 2F FD
+	if len(b) >= 4 && b[0] == 0x28 && b[1] == 0xB5 && b[2] == 0x2F && b[3] == 0xFD {
+		return tryZstd(b)
+	}
+
+	// gzip magic: 1F 8B
+	if len(b) >= 2 && b[0] == 0x1F && b[1] == 0x8B {
+		gr, err := gzip.NewReader(bytes.NewReader(b))
+		if err != nil {
+			return nil, fmt.Errorf("bad gzip: %w", err)
+		}
+		defer gr.Close()
+		return io.ReadAll(gr)
+	}
+
+	// zlib header: 78 01 / 78 9C / 78 DA
+	if len(b) >= 2 && b[0] == 0x78 && (b[1] == 0x01 || b[1] == 0x9C || b[1] == 0xDA) {
+		if out, err := tryZlib(b); err == nil {
+			return out, nil
+		}
+	}
+
+	// Last resort: raw deflate stream
+	if out, err := tryRawFlate(b); err == nil {
+		return out, nil
+	}
+
+	// Plain body (no compression)
+	return b, nil
+}
+
+func tryZlib(b []byte) ([]byte, error) {
+	zr, err := zlib.NewReader(bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
+	defer zr.Close()
+	return io.ReadAll(zr)
+}
+
+func tryRawFlate(b []byte) ([]byte, error) {
+	fr := flate.NewReader(bytes.NewReader(b))
+	defer fr.Close()
+	return io.ReadAll(fr)
+}
+
+func tryZstd(b []byte) ([]byte, error) {
+	dec, err := zstd.NewReader(nil) // stateless decoder
+	if err != nil {
+		return nil, err
+	}
+	defer dec.Close()
+	return dec.DecodeAll(b, nil)
+}
+
 func parseDDPayload(raw []byte) ([]map[string]any, error) {
 	trim := bytes.TrimSpace(raw)
 	if len(trim) == 0 {
 		return nil, fmt.Errorf("empty body")
 	}
 
-	// Try array of JSON objects
-	var arr []map[string]any
+	// Try JSON array of objects
 	if len(trim) > 0 && trim[0] == '[' {
+		var arr []map[string]any
 		if err := json.Unmarshal(trim, &arr); err == nil {
 			return arr, nil
 		}
+		// fall through to NDJSON tolerant handling
 	}
 
 	// Try single JSON object
-	var obj map[string]any
 	if len(trim) > 0 && trim[0] == '{' {
+		var obj map[string]any
 		if err := json.Unmarshal(trim, &obj); err == nil {
 			return []map[string]any{obj}, nil
 		}
+		// fall through to NDJSON tolerant handling
 	}
 
-	// Fallback: NDJSON
+	// Tolerant NDJSON: each line is either a JSON object OR raw text
 	var out []map[string]any
 	sc := bufio.NewScanner(bytes.NewReader(trim))
+	// increase buffer in case lines are large
+	const maxScan = 2 * 1024 * 1024
+	buf := make([]byte, 0, 64*1024)
+	sc.Buffer(buf, maxScan)
+
 	for sc.Scan() {
 		line := strings.TrimSpace(sc.Text())
 		if line == "" {
 			continue
 		}
-		var m map[string]any
-		if err := json.Unmarshal([]byte(line), &m); err != nil {
-			return nil, fmt.Errorf("bad NDJSON line: %v", err)
+		// If the line looks like JSON, try to parse
+		if strings.HasPrefix(line, "{") || strings.HasPrefix(line, "[") {
+			var m map[string]any
+			if err := json.Unmarshal([]byte(line), &m); err == nil {
+				out = append(out, m)
+				continue
+			}
+			// fall through to raw wrap if not a map (e.g., array/string)
 		}
-		out = append(out, m)
+		// Raw line → wrap as message
+		out = append(out, map[string]any{"message": line})
 	}
 	if err := sc.Err(); err != nil {
 		return nil, err
