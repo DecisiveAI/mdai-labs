@@ -1,0 +1,31 @@
+# otel-operator-rbac-patch.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: opentelemetry-operator-extra
+  namespace: mdai
+rules:
+  - apiGroups: ["opentelemetry.io"]
+    resources:
+      - opentelemetrycollectors
+      - opampbridges
+      - instrumentations
+      - targetallocators
+    verbs: ["get","list","watch","create","update","patch","delete"]
+  - apiGroups: [""]
+    resources: ["configmaps","secrets","services","endpoints","pods"]
+    verbs: ["get","list","watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: opentelemetry-operator-extra
+  namespace: mdai
+subjects:
+  - kind: ServiceAccount
+    name: opentelemetry-operator
+    namespace: mdai
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: opentelemetry-operator-extra
