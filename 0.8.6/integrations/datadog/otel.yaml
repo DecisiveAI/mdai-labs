@@ -58,15 +58,15 @@ spec:
     exporters:
       debug: {}
 
-      debug/verbose:
-        verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
+      # debug/verbose:
+      #   verbosity: detailed
+      #   sampling_initial: 5
+      #   sampling_thereafter: 200
 
-      # datadog:
-      #   api:
-      #     site: us5.datadoghq.com
-      #     key: ${API_KEY}
+      datadog:
+        api:
+          site: us5.datadoghq.com
+          key: ${API_KEY}
 
     service:
       telemetry:
@@ -85,5 +85,6 @@ spec:
         logs/datadog:
           receivers: [otlp/datadog]
           processors: [batch]
-          exporters: [debug/verbose]
+          exporters: [debug]
+          # exporters: [debug, datadog]
 
