@@ -40,7 +40,7 @@ opentelemetry-operator:
       certPeriodDays: 365
   fullnameOverride: opentelemetry-operator
   crds:
-    create: false
+    create: true
   manager:
     image:
       repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
@@ -55,6 +55,8 @@ opentelemetry-operator:
       WATCH_NAMESPACE: mdai
   kubeRBACProxy:
     enabled: false
+  createRbacPermissions: 1
+  enableWebhooks: true
 
 metrics-server:
   enabled: false
