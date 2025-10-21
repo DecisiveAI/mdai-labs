@@ -18,7 +18,6 @@ Add your Datadog API Key as a secret in k8s
 # Make sure the namespace is the same namespace your collector is in.
 # Alternatively, you can create a secret per namespace where resources require the secret.
 kubectl -n your_namespace create secret generic datadog-secret --from-literal api-key=*****dd_api_key*****
-kubectl -n datadog create secret generic datadog-secret --from-literal api-key=*****dd_api_key*****
 ```
 
 Install the mdai resources
@@ -46,6 +45,7 @@ kubectl apply -f k8s/deployment.yaml
 helm repo add datadog https://helm.datadoghq.com
 helm repo update
 helm install datadog-agent -f 0.8.6/integrations/datadog/dd_values.yaml datadog/datadog --create-namespace -n datadog
+kubectl -n datadog create secret generic datadog-secret --from-literal api-key=*****dd_api_key*****
 ```
 
 If you ever need to, you can uninstall the datadog agent using the following command...

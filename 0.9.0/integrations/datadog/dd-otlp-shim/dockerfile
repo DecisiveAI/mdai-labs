@@ -1,0 +1,16 @@
+# --- build stage ---
+FROM golang:1.22 AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+# static build
+ENV CGO_ENABLED=0
+RUN go build -ldflags="-s -w" -o /out/dd-otlp-shim .
+
+# --- run stage ---
+FROM gcr.io/distroless/static-debian12:nonroot
+USER nonroot:nonroot
+EXPOSE 8080
+COPY --from=build /out/dd-otlp-shim /dd-otlp-shim
+ENTRYPOINT ["/dd-otlp-shim"]
