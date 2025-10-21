@@ -529,7 +529,7 @@ report_json() {
   printf '    "chart_version":"%s",\n' "$(printf "%s" "${HELM_CHART_VERSION}"| json_safe)"
 
   printf '    "invocation_values_files": ['
-    if ((${#HELM_VALUES[@]:-0})); then
+    if ((${#HELM_VALUES[@]})); then
       local i=0 first=1
       while (( i < ${#HELM_VALUES[@]} )); do
         if [[ "${HELM_VALUES[$i]}" == "--values" ]]; then
@@ -540,7 +540,7 @@ report_json() {
   printf '],\n'
 
   printf '    "invocation_set_flags": ['
-    if ((${#HELM_SET[@]:-0})); then
+    if ((${#HELM_SET[@]})); then
       local i=0 first=1
       while (( i < ${#HELM_SET[@]} )); do
         if [[ "${HELM_SET[$i]}" == "--set" ]]; then
@@ -551,7 +551,7 @@ report_json() {
   printf '],\n'
 
   printf '    "invocation_extra_args": ['
-    if ((${#HELM_EXTRA[@]:-0})); then
+    if ((${#HELM_EXTRA[@]})); then
       local i=0
       for a in "${HELM_EXTRA[@]}"; do
         printf '%s"%s"' $([[ $i -gt 0 ]] && echo ,) "$(printf "%s" "$a" | json_safe)"; ((i++))
@@ -1014,7 +1014,7 @@ parse_globals() {
   CMD_ARGS=("$@")
 
   # Guard empty array to avoid 'unbound variable' on Bash 3.2 + set -u
-  if ((${#CMD_ARGS[@]:-0})); then
+  if ((${#CMD_ARGS[@]})); then
     # Re-parse globals that were placed after the subcommand
     parse_trailing_globals "${CMD_ARGS[@]}"
   else
@@ -1032,7 +1032,7 @@ parse_globals() {
 # Safely pass CMD_ARGS to a subcommand (works with Bash 3.2 + set -u)
 call_with_cmd_args() {
   local fn="$1"; shift || true
-  if ((${#CMD_ARGS[@]:-0})); then
+  if ((${#CMD_ARGS[@]})); then
     "$fn" "${CMD_ARGS[@]}"
   else
     "$fn"
@@ -1242,14 +1242,14 @@ cmd_use_case() {
     k_delete "$otel_f"
     k_delete "$hub_f"
     if [[ -n "$data_f" && -f "$data_f" ]]; then k_delete "$data_f" || true; fi
-    if ((${#extras[@]:-0})); then for f in "${extras[@]}"; do k_delete "$f" || true; done; fi
+    if ((${#extras[@]})); then for f in "${extras[@]}"; do k_delete "$f" || true; done; fi
     ok "use-case '${case_name}': deleted"
     uc_track "delete" "$case_name" "ok" "$version" "$WORKFLOW" "$hub_f" "$otel_f" "$data_f"
   else
     k_apply "$otel_f"
     k_apply "$hub_f"
     if [[ -n "$data_f" && -f "$data_f" ]]; then k_apply "$data_f" ; fi
-    if ((${#extras[@]:-0})); then for f in "${extras[@]}"; do k_apply "$f"; done; fi
+    if ((${#extras[@]})); then for f in "${extras[@]}"; do k_apply "$f"; done; fi
     ok "use-case '${case_name}': applied"
     uc_track "apply" "$case_name" "ok" "$version" "$WORKFLOW" "$hub_f" "$otel_f" "$data_f"
   fi
