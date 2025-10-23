@@ -24,21 +24,7 @@ Install the mdai resources
 
 ```bash
 mdai use_case data_filtration --version 0.9.0 --workflow static --otel ./0.9.0/integrations/datadog/otel.yaml
-```
-
-## Add `dd-otlp-shim` Service
-
-[Setup dd-otlp-shim service](dd-otlp-shim/README.md)
-
-
-After initial setup steps, apply the k8s deployment to provision the service resources.
-
-```bash
-cd 0.9.0/integrations/datadog/dd-otlp-shim
-
-kubectl apply -f k8s/deployment.yaml
-```
-
+``
 ## Add DD Agent
 
 ```bash
@@ -48,6 +34,7 @@ helm install datadog-agent -f 0.9.0/integrations/datadog/dd_values.yaml datadog/
 kubectl -n datadog create secret generic datadog-secret --from-literal api-key=*****dd_api_key*****
 ```
 
+## Remove DD Agent
 If you ever need to, you can uninstall the datadog agent using the following command...
 
 ```bash

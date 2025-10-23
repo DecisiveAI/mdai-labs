@@ -26,19 +26,6 @@ Install the mdai resources
 mdai use_case data_filtration --version 0.8.6 --workflow static --otel ./0.8.6/integrations/datadog/otel.yaml
 ```
 
-## Add `dd-otlp-shim` Service
-
-[Setup dd-otlp-shim service](dd-otlp-shim/README.md)
-
-
-After initial setup steps, apply the k8s deployment to provision the service resources.
-
-```bash
-cd 0.8.6/integrations/datadog/dd-otlp-shim
-
-kubectl apply -f k8s/deployment.yaml
-```
-
 ## Add DD Agent
 
 ```bash

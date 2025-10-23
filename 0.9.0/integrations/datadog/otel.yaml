@@ -7,7 +7,7 @@ metadata:
   namespace: mdai
 spec:
   managementState: managed
-  image: otel/opentelemetry-collector-contrib:0.127.0
+  image: public.ecr.aws/decisiveai/mdai-dd-collector:0.1.0
   imagePullPolicy: Always
   replicas: 1
   resources:
@@ -25,7 +25,10 @@ spec:
         key: api-key
   config:
     receivers:
-      otlp/datadog:
+      datadog:
+        endpoint: 0.0.0.0:8126
+
+      otlp:
         protocols:
           grpc:
             endpoint: 0.0.0.0:4317
@@ -46,6 +49,7 @@ spec:
         endpoint : 0.0.0.0:13133
 
     processors:
+
       memory_limiter:
         check_interval: 23s
         limit_percentage: 75
@@ -55,13 +59,23 @@ spec:
         send_batch_size: 5000
         timeout: 10s
 
+      datadogsemantics: {}
+
+    connectors:
+      datadog/connector:
+        traces:
+          trace_buffer: 1000  # default
+
     exporters:
       debug: {}
+      debug/logs: {}
+      debug/metrics: {}
 
       # debug/verbose:
-      #   verbosity: detailed
-      #   sampling_initial: 5
-      #   sampling_thereafter: 200
+      debug/logs_verbose:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
 
       datadog:
         api:
@@ -82,9 +96,19 @@ spec:
       extensions:
         - health_check
       pipelines:
-        logs/datadog:
-          receivers: [otlp/datadog]
-          processors: [batch]
-          exporters: [debug]
-          # exporters: [debug, datadog]
+        # traces:
+        #   receivers: [ datadog ]
+        #   processors: [ batch ]
+        #   exporters: [ datadog ]
+        # metrics:
+        #   receivers: [ datadog ]
+        #   processors: [ batch ]
+        #   exporters: [ datadog, debug/metrics ]
+        logs:
+          receivers: [ datadog ]
+          processors: [ batch ]
+          exporters: [ debug/logs_verbose ]
+          # Only uncomment the following line when you're ready to send data to datadog
+          # exporters: [ debug/logs, datadog ]
+
 
