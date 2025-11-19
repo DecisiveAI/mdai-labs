@@ -1,0 +1,57 @@
+datadog:
+  apiKeyExistingSecret: datadog-secret
+  clusterName: mdai-test
+  site: us5.datadoghq.com
+
+  # Your proxy/shim endpoints (unchanged)
+  dd_url: http://gateway-collector.mdai.svc.cluster.local:8126
+  kubelet:
+    tlsVerify: false
+
+  logs:
+    enabled: true
+    # Must be true for include/exclude rules to apply to container logs
+    containerCollectAll: true
+
+  env:
+    # ---- Log forwarding via HTTP through your gateway (kept) ----
+    - name: DD_LOGS_CONFIG_LOGS_DD_URL
+      value: http://gateway-collector.mdai.svc.cluster.local:8126
+    - name: DD_LOGS_CONFIG_USE_HTTP
+      value: "true"
+    - name: DD_LOGS_CONFIG_USE_COMPRESSION
+      value: "true"
+
+    # ---- Global tags (kept) ----
+    - name: DD_TAGS
+      value: "cluster:mdai env:dev_dd_test"
+
+    # ---- Only INCLUDE logs from the synthetics namespace ----
+    # Use kube_namespace selector; space-separated patterns allowed.
+    # Inclusion takes precedence over exclusion for logs/metrics.
+    - name: DD_CONTAINER_INCLUDE_LOGS
+      value: "kube_namespace:^synthetics$"
+
+    # Optional: explicitly exclude everything else (include still wins)
+    - name: DD_CONTAINER_EXCLUDE_LOGS
+      value: "kube_namespace:.*"
+
+dogstatsd:
+  port: 8125
+  useHostPort: true
+  nonLocalTraffic: true
+
+apm_config:
+  enabled: true
+
+agents:
+  containers:
+    traceAgent:
+      env:
+        - name: DD_HOSTNAME
+          value: datadog-agent
+        - name: DD_SKIP_SSL_VALIDATION
+          value: "true"
+        # This only affects metrics/APM discovery, not log inclusion above.
+        - name: DD_KUBERNETES_EXCLUDE_NAMESPACE
+          value: "kube-system|mdai|datadog"

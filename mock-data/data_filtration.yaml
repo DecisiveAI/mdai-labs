@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mdai-logger-settings
-  namespace: mdai
+  namespace: synthetics
 data:
   # Common
   COMMON_LOG_MESSAGE: "The algorithm successfully executed, triggering neural pathways and producing a burst of optimized data streams."
@@ -32,7 +32,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mdai-logger-bundle
-  namespace: mdai
+  namespace: synthetics
   labels:
     app.kubernetes.io/name: mdai-logger-bundle
     app.kubernetes.io/part-of: mdai-log-generator
