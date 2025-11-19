@@ -7,7 +7,7 @@ metadata:
   namespace: mdai
 spec:
   managementState: managed
-  image: public.ecr.aws/decisiveai/mdai-dd-collector:0.1.0
+  image: public.ecr.aws/decisiveai/mdai-datadog-collector:0.1.0
   imagePullPolicy: Always
   replicas: 1
   resources:
@@ -67,11 +67,6 @@ spec:
           trace_buffer: 1000  # default
 
     exporters:
-      debug: {}
-      debug/logs: {}
-      debug/metrics: {}
-
-      # debug/verbose:
       debug/logs_verbose:
         verbosity: detailed
         sampling_initial: 5
@@ -96,19 +91,11 @@ spec:
       extensions:
         - health_check
       pipelines:
-        # traces:
-        #   receivers: [ datadog ]
-        #   processors: [ batch ]
-        #   exporters: [ datadog ]
-        # metrics:
-        #   receivers: [ datadog ]
-        #   processors: [ batch ]
-        #   exporters: [ datadog, debug/metrics ]
         logs:
           receivers: [ datadog ]
           processors: [ batch ]
           exporters: [ debug/logs_verbose ]
           # Only uncomment the following line when you're ready to send data to datadog
-          # exporters: [ debug/logs, datadog ]
+          # exporters: [ datadog ]
 
 
