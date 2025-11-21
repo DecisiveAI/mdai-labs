@@ -1,0 +1,44 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-sample
+  namespace: mdai
+spec:
+  variables:
+    - key: replay_a_request
+      type: manual
+      dataType: string
+    - key: replay_a_status
+      dataType: string
+
+  rules:
+    - name: replay_requested
+      when:
+        variableUpdated: replay_a_request
+        updateType: set
+      then:
+        - deployReplay:
+            replaySpec:
+              statusVariableRef: replay_a_status
+              opampEndpoint: http://mdai-gateway.mdai.svc.cluster.local:8081/opamp
+              source:
+                aws:
+                  awsAccessKeySecret: aws-credentials
+                s3:
+                  s3Region: us-east-1
+                  s3Bucket: mdai-collector-logs
+                  s3Partition: minute
+                  filePrefix: test-
+                  s3Path: test-logs
+              destination:
+                otlpHttp:
+                  endpoint: http://gateway-collector.mdai.svc.cluster.local:4318
+    - name: replay_completed
+      when:
+        variableUpdated: replay_a_status
+        updateType: set
+      then:
+        - cleanUpReplay: {}

@@ -22,13 +22,13 @@ spec:
   config:
     receivers:
       fluentforward:
-        endpoint: '${env:MY_POD_IP}:8006'
+        endpoint: "${env:MY_POD_IP}:8006"
       otlp:
         protocols:
           grpc:
-            endpoint: '${env:MY_POD_IP}:4317'
+            endpoint: "${env:MY_POD_IP}:4317"
           http:
-            endpoint: '${env:MY_POD_IP}:4318'
+            endpoint: "${env:MY_POD_IP}:4318"
             # Since this collector needs to receive data from the web, enable cors for all origins
             # `allowed_origins` can be refined for your deployment domain
             cors:
@@ -78,9 +78,9 @@ spec:
       #       - '"${env:SERVICE_LIST_REGEX}" != "" and IsMatch(attributes["mdai_service"], "${env:SERVICE_LIST_REGEX}")'
 
     exporters:
-      debug: { }
+      debug: {}
       otlp/observer:
-        endpoint: mdaihub-sample-observer-collector-service.mdai.svc.cluster.local:4317
+        endpoint: sample-mdai-observer-service.mdai.svc.cluster.local:4317
         tls:
           insecure: true
 
@@ -94,28 +94,28 @@ spec:
         - health_check
       pipelines:
         logs/customer_pipeline:
-          receivers: [ otlp, fluentforward ]
+          receivers: [otlp, fluentforward]
           processors: [
-            # UNCOMMENT THE FOLLOWING LINE TO START FILTRATION
-            # filter/service_list,
-            # DO NOT CHANGE ORDER
-            resource/observer_exporter_tag,
-            groupbyattrs,
-            memory_limiter,
-            # DO NOT CHANGE ORDER
-            # batch must be last in processor list
-            batch
-          ]
-          exporters: [ debug, otlp/observer ]
+              # UNCOMMENT THE FOLLOWING LINE TO START FILTRATION
+              # filter/service_list,
+              # DO NOT CHANGE ORDER
+              resource/observer_exporter_tag,
+              groupbyattrs,
+              memory_limiter,
+              # DO NOT CHANGE ORDER
+              # batch must be last in processor list
+              batch,
+            ]
+          exporters: [debug, otlp/observer]
 
         logs/watch_receivers:
-          receivers: [ otlp, fluentforward ]
+          receivers: [otlp, fluentforward]
           processors: [
-            resource/observer_receiver_tag,
-            groupbyattrs,
-            memory_limiter,
-            # DO NOT CHANGE ORDER
-            # batch must be last in processor list
-            batch
-          ]
-          exporters: [ debug, otlp/observer ]
+              resource/observer_receiver_tag,
+              groupbyattrs,
+              memory_limiter,
+              # DO NOT CHANGE ORDER
+              # batch must be last in processor list
+              batch,
+            ]
+          exporters: [debug, otlp/observer]
