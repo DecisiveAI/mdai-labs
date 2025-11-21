@@ -1,3 +1,5 @@
 .env
 .github
 .mdai
+.DS_Store
+*/.DS_Store
