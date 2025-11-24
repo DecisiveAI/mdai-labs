@@ -20,6 +20,18 @@ spec:
     receivers:
       fluentforward:
         endpoint: "0.0.0.0:8006"
+      otlp/replay:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+          http:
+            endpoint: "0.0.0.0:4318"
+            # Since this collector needs to receive data from the web, enable cors for all origins
+            # `allowed_origins` can be refined for your deployment domain
+            cors:
+              allowed_origins:
+                - "http://*"
+                - "https://*"
 
     extensions:
       health_check:
@@ -36,7 +48,23 @@ spec:
         timeout: 13s
 
     exporters:
-      debug: {}
+      debug/provider: {}
+      debug/replayed: {}
+      awss3:
+        s3uploader:
+          region: "us-east-1"
+          s3_bucket: "mdai-labs-logs"
+          s3_prefix: "test-logs"
+          s3_partition_format: "%Y/%m/%d/%H/%M" # matches 'minute' partition in awss3 receiver and replay definition
+          file_prefix: test-
+
+    connectors:
+      routing:
+        default_pipelines: [logs/s3_only]
+        table:
+          - context: log
+            condition: severity_number < SEVERITY_NUMBER_ERROR
+            pipelines: [logs/s3_only]
 
     service:
       telemetry:
@@ -51,7 +79,21 @@ spec:
                     port: 8888
       extensions: [health_check]
       pipelines:
-        logs/customer_pipeline:
+        logs/input:
           receivers: [fluentforward]
+          processors: []
+          exporters: [routing]
+        logs/provider_and_s3:
+          receivers: [routing]
           processors: [memory_limiter, batch]
-          exporters: [debug]
+          exporters:
+            - debug/provider # simulates sending data to a provider directly from log source
+            - awss3
+        logs/s3_only:
+          receivers: [routing]
+          processors: [memory_limiter, batch]
+          exporters: [awss3]
+        logs/replay_pipeline:
+          receivers: [otlp/replay]
+          processors: [memory_limiter, batch]
+          exporters: [debug/replayed] # simlates sending replayed data to your downstream provider
