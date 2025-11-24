@@ -16,6 +16,9 @@ spec:
     requests:
       memory: "128Mi"
       cpu: "100m"
+  envFrom:
+    - secretRef:
+        name: aws-credentials
   config:
     receivers:
       fluentforward:
@@ -50,21 +53,22 @@ spec:
     exporters:
       debug/provider: {}
       debug/replayed: {}
+      debug/saved_to_s3: {}
       awss3:
         s3uploader:
-          region: "us-east-1"
-          s3_bucket: "mdai-labs-logs"
-          s3_prefix: "test-logs"
+          region: "us-east-2"
+          s3_bucket: "mdai-labs"
+          s3_prefix: "replay-basic-logs"
           s3_partition_format: "%Y/%m/%d/%H/%M" # matches 'minute' partition in awss3 receiver and replay definition
-          file_prefix: test-
+          file_prefix: replay-basic-
 
     connectors:
       routing:
         default_pipelines: [logs/s3_only]
         table:
           - context: log
-            condition: severity_number < SEVERITY_NUMBER_ERROR
-            pipelines: [logs/s3_only]
+            condition: severity_number >= SEVERITY_NUMBER_ERROR
+            pipelines: [logs/provider_and_s3]
 
     service:
       telemetry:
@@ -92,7 +96,9 @@ spec:
         logs/s3_only:
           receivers: [routing]
           processors: [memory_limiter, batch]
-          exporters: [awss3]
+          exporters:
+            - awss3
+            - debug/saved_to_s3
         logs/replay_pipeline:
           receivers: [otlp/replay]
           processors: [memory_limiter, batch]
