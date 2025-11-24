@@ -30,12 +30,7 @@ helm upgrade --install --repo https://fluent.github.io/helm-charts fluent fluent
 ```
 
 ```
-curl --request POST \
-  --url http://localhost:8081/variables/hub/mdaihub-sample/var/replay_a_request \
-  --header 'Content-Type: application/json' \
-  --data '{
-	"data": "{\"replayName\":\"test-replay\",\"startTime\":\"2025-08-19 12:00\",\"endTime\":\"2025-08-19 12:10\",\"telemetryType\":\"logs\"}"
-}'
+kubectl port-forward $(kubectl get pods -l app=mdai-gateway -o jsonpath='{.items[0].metadata.name}') 8081:8081
 ```
 
 ```
