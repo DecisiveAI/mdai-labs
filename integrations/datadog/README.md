@@ -23,14 +23,14 @@ kubectl -n your_namespace create secret generic datadog-secret --from-literal ap
 Install the mdai resources
 
 ```bash
-mdai use_case data_filtration --version 0.9.0 --workflow static --otel ./0.9.0/integrations/datadog/otel.yaml
+mdai use_case data_filtration --version 0.9.0 --workflow static --otel ./integrations/datadog/otel.yaml
 ``
 ## Add DD Agent
 
 ```bash
 helm repo add datadog https://helm.datadoghq.com
 helm repo update
-helm install datadog-agent -f 0.9.0/integrations/datadog/dd_values.yaml datadog/datadog --create-namespace -n datadog
+helm install datadog-agent -f integrations/datadog/dd_values.yaml datadog/datadog --create-namespace -n datadog
 kubectl -n datadog create secret generic datadog-secret --from-literal api-key=*****dd_api_key*****
 ```
 
