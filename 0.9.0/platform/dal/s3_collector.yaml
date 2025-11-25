@@ -1,0 +1,99 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-s3
+  namespace: mdai
+spec:
+  mode: deployment
+  image: otel/opentelemetry-collector-contrib:latest
+
+  env:
+    - name: AWS_S3_BUCKET
+      valueFrom:
+        configMapKeyRef:
+          name: otel-s3-config
+          key: AWS_S3_BUCKET
+    - name: AWS_REGION
+      valueFrom:
+        configMapKeyRef:
+          name: otel-s3-config
+          key: AWS_REGION
+    - name: S3_ENDPOINT
+      valueFrom:
+        configMapKeyRef:
+          name: otel-s3-config
+          key: S3_ENDPOINT
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: otel-s3-creds
+          key: AWS_ACCESS_KEY_ID
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+          secretKeyRef:
+            name: otel-s3-creds
+            key: AWS_SECRET_ACCESS_KEY
+
+  config:
+    receivers:
+      otlp:
+        protocols:
+          http: {}
+          grpc: {}
+
+    processors:
+      batch: {}
+
+    exporters:
+      awss3/metrics:
+        s3uploader:
+          region: ${env:AWS_REGION}
+          endpoint: ${env:S3_ENDPOINT}
+          disable_ssl: true
+          s3_bucket: ${env:AWS_S3_BUCKET}
+          s3_prefix: "metrics"
+          s3_partition_format: "%Y/%m/%d/%H/%M"
+#          marshaler: otlp_json
+          compression: gzip
+          s3_force_path_style: true
+
+      awss3/logs:
+        s3uploader:
+          region: ${env:AWS_REGION}
+          endpoint: ${env:S3_ENDPOINT}
+          disable_ssl: true
+          s3_bucket: ${env:AWS_S3_BUCKET}
+          s3_prefix: "logs"
+          s3_partition_format: "%Y/%m/%d/%H/%M"
+#          marshaler: otlp_json
+          compression: gzip
+          s3_force_path_style: true
+
+      awss3/traces:
+        s3uploader:
+          region: ${env:AWS_REGION}
+          endpoint: ${env:S3_ENDPOINT}
+          disable_ssl: true
+          s3_bucket: ${env:AWS_S3_BUCKET}
+          s3_prefix: "traces"
+          s3_partition_format: "%Y/%m/%d/%H/%M"
+#          marshaler: otlp_json
+          compression: gzip
+          s3_force_path_style: true
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [awss3/metrics]
+
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [awss3/logs]
+
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [awss3/traces]

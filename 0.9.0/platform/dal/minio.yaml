@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-creds
+  namespace: mdai
+stringData:
+  MINIO_ROOT_USER: minio
+  MINIO_ROOT_PASSWORD: minio123
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: mdai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - name: minio
+        image: minio/minio:latest
+        args:
+          - server
+          - /data
+          - --console-address=:9001
+        env:
+          - name: MINIO_ROOT_USER
+            valueFrom:
+              secretKeyRef:
+                name: minio-creds
+                key: MINIO_ROOT_USER
+          - name: MINIO_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: minio-creds
+                key: MINIO_ROOT_PASSWORD
+        volumeMounts:
+          - name: minio-buckets
+            mountPath: /config/bucket/telemetry/bucket.json
+            subPath: bucket.json
+        ports:
+          - containerPort: 9000
+          - containerPort: 9001
+      volumes:
+        - name: minio-buckets
+          configMap:
+            name: minio-buckets
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: mdai
+spec:
+  ports:
+    - name: api
+      port: 9000
+      targetPort: 9000
+    - name: ui
+      port: 9001
+      targetPort: 9001
+  selector:
+    app: minio
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-buckets
+  namespace: mdai
+data:
+  bucket.json: |
+    {
+      "version": "1",
+      "name": "telemetry"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-s3-config
+  namespace: mdai
+data:
+  AWS_S3_BUCKET: "telemetry"
+  AWS_REGION: "us-east-1"
+  S3_ENDPOINT: "http://minio.mdai.svc.cluster.local:9000"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: otel-s3-creds
+  namespace: mdai
+stringData:
+  AWS_ACCESS_KEY_ID: "minio"
+  AWS_SECRET_ACCESS_KEY: "minio123"
