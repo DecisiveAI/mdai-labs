@@ -1,7 +1,7 @@
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
-  name: otel-s3
+  name: gateway
   namespace: mdai
 spec:
   mode: deployment
@@ -11,31 +11,28 @@ spec:
     - name: AWS_S3_BUCKET
       valueFrom:
         configMapKeyRef:
-          name: otel-s3-config
+          name: dal-collector-config
           key: AWS_S3_BUCKET
     - name: AWS_REGION
       valueFrom:
         configMapKeyRef:
-          name: otel-s3-config
+          name: dal-collector-config
           key: AWS_REGION
-    - name: S3_ENDPOINT
-      valueFrom:
-        configMapKeyRef:
-          name: otel-s3-config
-          key: S3_ENDPOINT
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
-          name: otel-s3-creds
+          name: aws-credentials
           key: AWS_ACCESS_KEY_ID
     - name: AWS_SECRET_ACCESS_KEY
       valueFrom:
           secretKeyRef:
-            name: otel-s3-creds
+            name: aws-credentials
             key: AWS_SECRET_ACCESS_KEY
 
   config:
     receivers:
+      fluentforward:
+        endpoint: "0.0.0.0:8006"
       otlp:
         protocols:
           http: {}
@@ -48,52 +45,69 @@ spec:
       awss3/metrics:
         s3uploader:
           region: ${env:AWS_REGION}
-          endpoint: ${env:S3_ENDPOINT}
           disable_ssl: true
           s3_bucket: ${env:AWS_S3_BUCKET}
           s3_prefix: "metrics"
           s3_partition_format: "%Y/%m/%d/%H/%M"
-#          marshaler: otlp_json
           compression: gzip
-          s3_force_path_style: true
 
       awss3/logs:
         s3uploader:
           region: ${env:AWS_REGION}
-          endpoint: ${env:S3_ENDPOINT}
           disable_ssl: true
           s3_bucket: ${env:AWS_S3_BUCKET}
           s3_prefix: "logs"
           s3_partition_format: "%Y/%m/%d/%H/%M"
-#          marshaler: otlp_json
           compression: gzip
-          s3_force_path_style: true
 
       awss3/traces:
         s3uploader:
           region: ${env:AWS_REGION}
-          endpoint: ${env:S3_ENDPOINT}
           disable_ssl: true
           s3_bucket: ${env:AWS_S3_BUCKET}
           s3_prefix: "traces"
           s3_partition_format: "%Y/%m/%d/%H/%M"
-#          marshaler: otlp_json
           compression: gzip
-          s3_force_path_style: true
+
+      otlphttp/dal:
+        endpoint: "http://mdai-dal-mdai-dal.default.svc.cluster.local:4318"
+        tls:
+          insecure: true
+        # compression: "gzip"
+        # timeout: 10s
+        # sending_queue:
+        #   enabled: true
+        #   sizer: "items"
+        #   num_consumers: 2
+        #   queue_size: 100000
+        #   batch:
+        #     flush_timeout: 200ms
+        #     min_size: 1000
+        #     max_size: 10000
 
     service:
       pipelines:
         metrics:
           receivers: [otlp]
           processors: [batch]
-          exporters: [awss3/metrics]
+          exporters: [otlphttp/dal]
 
         logs:
-          receivers: [otlp]
+          receivers: [otlp, fluentforward]
           processors: [batch]
-          exporters: [awss3/logs]
+          exporters: [otlphttp/dal]
 
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [awss3/traces]
+          exporters: [otlphttp/dal]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dal-collector-config
+  namespace: mdai
+data:
+  AWS_S3_BUCKET: "mdai-test-dal"
+  AWS_REGION: "us-east-1"
+
