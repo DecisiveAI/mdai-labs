@@ -141,27 +141,59 @@ apply_no_cert_manager_sets() {
 # ==============
 
 k_apply() {
-  local f="$1"
+  # Default to global NAMESPACE, but allow an override via -n/--namespace
+  local ns="${NAMESPACE}"
+  local f=""
+
+  # Optional leading -n/--namespace <ns>
+  if [[ $# -ge 2 && ( "$1" == "-n" || "$1" == "--namespace" ) ]]; then
+    ns="$2"
+    shift 2
+  fi
+
+  if [[ $# -lt 1 ]]; then
+    err "k_apply: missing manifest file"
+    return 1
+  fi
+
+  f="$1"
   ensure_file "$f"
+
   if "$DRY_RUN"; then
-    echo "+ kubectl $KCTX apply -f $f -n ${NAMESPACE}"
+    echo "+ kubectl $KCTX apply -f $f -n ${ns}"
   else
-    echo "+ kubectl $KCTX apply -f $f -n ${NAMESPACE}"
-    kubectl $KCTX apply -f "$f" -n "${NAMESPACE}"
+    echo "+ kubectl $KCTX apply -f $f -n ${ns}"
+    kubectl $KCTX apply -f "$f" -n "${ns}"
   fi
 }
 
 k_delete() {
-  local f="$1"
+  local ns="${NAMESPACE}"
+  local f=""
+
+  # Optional leading -n/--namespace <ns>
+  if [[ $# -ge 2 && ( "$1" == "-n" || "$1" == "--namespace" ) ]]; then
+    ns="$2"
+    shift 2
+  fi
+
+  if [[ $# -lt 1 ]]; then
+    err "k_delete: missing manifest file"
+    return 1
+  fi
+
+  f="$1"
+
   if [[ ! -f "$f" ]]; then
     warn "Delete skipped; file not found: $f"
     return 0
   fi
+
   if "$DRY_RUN"; then
-    echo "+ kubectl $KCTX delete -f $f -n ${NAMESPACE}"
+    echo "+ kubectl $KCTX delete -f $f -n ${ns}"
   else
-    echo "+ kubectl $KCTX delete -f $f -n ${NAMESPACE}"
-    kubectl $KCTX delete -f "$f" -n "${NAMESPACE}"
+    echo "+ kubectl $KCTX delete -f $f -n ${ns}"
+    kubectl $KCTX delete -f "$f" -n "${ns}"
   fi
 }
 
@@ -178,6 +210,11 @@ ns_ensure() {
   if ! kubectl $KCTX get ns "${NAMESPACE}" >/dev/null 2>&1; then
     info "Creating namespace '${NAMESPACE}'..."
     run "kubectl $KCTX create namespace ${NAMESPACE}"
+  fi
+
+  if ! kubectl $KCTX get ns "synthetics" >/dev/null 2>&1; then
+    info "Creating namespace 'synthetics'..."
+    run "kubectl $KCTX create namespace synthetics"
   fi
 }
 
@@ -1193,7 +1230,6 @@ cmd_use_case() {
     first_existing "${CANDIDATES[@]}"
   }
 
-
   [[ -z "$hub_f"  ]]  && hub_f="$(resolve_uc_file hub || true)"
   [[ -z "$otel_f" ]]  && otel_f="$(resolve_uc_file otel || true)"
 
@@ -1214,7 +1250,10 @@ cmd_use_case() {
       "/mock-data/${case_name}-data.yaml" \
       "/mock-data/${case_name}-data.yml" \
     ; do
-      [[ -f "$cand" ]] && { printf "%s" "$cand"; return 0; }
+      if [[ -f "$cand" ]]; then
+        printf '%s\n' "$cand"
+        return 0
+      fi
     done
     return 1
   }
@@ -1241,14 +1280,15 @@ cmd_use_case() {
   if $DO_DELETE; then
     k_delete "$otel_f"
     k_delete "$hub_f"
-    if [[ -n "$data_f" && -f "$data_f" ]]; then k_delete "$data_f" || true; fi
+    if [[ -n "$data_f" && -f "$data_f" ]]; then k_delete -n synthetics "$data_f" || true; fi
     if ((${#extras[@]})); then for f in "${extras[@]}"; do k_delete "$f" || true; done; fi
     ok "use-case '${case_name}': deleted"
     uc_track "delete" "$case_name" "ok" "$version" "$WORKFLOW" "$hub_f" "$otel_f" "$data_f"
   else
     k_apply "$otel_f"
     k_apply "$hub_f"
-    if [[ -n "$data_f" && -f "$data_f" ]]; then k_apply "$data_f" ; fi
+
+    if [[ -n "$data_f" && -f "$data_f" ]]; then k_apply -n synthetics "$data_f" ; fi
     if ((${#extras[@]})); then for f in "${extras[@]}"; do k_apply "$f"; done; fi
     ok "use-case '${case_name}': applied"
     uc_track "apply" "$case_name" "ok" "$version" "$WORKFLOW" "$hub_f" "$otel_f" "$data_f"

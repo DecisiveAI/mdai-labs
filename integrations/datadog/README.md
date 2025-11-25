@@ -24,9 +24,9 @@ Install the mdai resources
 
 ```bash
 mdai use_case data_filtration --version 0.9.0 --workflow static --otel ./integrations/datadog/otel.yaml
-``
-## Add DD Agent
+```
 
+## Add DD Agent
 ```bash
 helm repo add datadog https://helm.datadoghq.com
 helm repo update
