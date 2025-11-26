@@ -70,10 +70,10 @@ spec:
           compression: gzip
 
       otlphttp/dal:
-        endpoint: "http://mdai-dal-mdai-dal.default.svc.cluster.local:4318"
+        endpoint: "http://mdai-dal.mdai.svc.cluster.local:4318"
         tls:
           insecure: true
-        # compression: "gzip"
+        compression: "gzip"
         # timeout: 10s
         # sending_queue:
         #   enabled: true
