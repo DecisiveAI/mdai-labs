@@ -14,13 +14,10 @@ mdai install --version 0.9.0 -f values/overrides_0.9.0-partial.yaml
 # TODO -- mdai platform dal-collector
 
 kubectl create namespace synthetics
-k apply -f  mock-data/data_filtration.yaml
-
+k apply -f mock-data/data_filtration.yaml
 chmod +x 0.9.0/platform/dal/aws_secret_from_env.sh
-
-k apply -f 0.9.0/platform/dal/aws_secret_from_env.sh
-
-k apply -f  0.9.0/platform/dal/s3_collector.yaml
+./0.9.0/platform/dal/aws_secret_from_env.sh
+k apply -f 0.9.0/platform/dal/s3_collector.yaml
 ```
 
 ## Install otel collector to write directly to s3
@@ -31,7 +28,7 @@ Go to [mdai-dal repo](https://github.com/DecisiveAI/mdai-dal).
 cd /path/to/mdai-dal
 
 chmod +x 0.9.0/platform/dal/aws_secret_from_env.sh
-k apply -f 0.9.0/platform/dal/aws_secret_from_env.sh
+./0.9.0/platform/dal/aws_secret_from_env.sh
 
 helm upgrade --install mdai-dal -n mdai ./deployment \
   --set dal.s3.bucket=mdai-test-dal \
