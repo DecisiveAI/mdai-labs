@@ -1,6 +1,10 @@
 # How2Replay
 
 ```sh
+helm dependency update ../mdai-hub --repository-config /dev/null
+```
+
+```sh
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
 ```
 
@@ -38,6 +42,6 @@ curl --request POST \
   --url http://localhost:8081/variables/hub/mdaihub-sample/var/replay_a_request \
   --header 'Content-Type: application/json' \
   --data "{
-	\"data\": \"{\\\"replayName\\\":\\\"test-replay\\\",\\\"startTime\\\":\\\"$(if [[ "$OSTYPE" == "darwin"* ]]; then date -v-5M '+%Y-%m-%d %H:%M'; else date -d '5 minutes ago' '+%Y-%m-%d %H:%M'; fi)\\\",\\\"endTime\\\":\\\"$(date '+%Y-%m-%d %H:%M')\\\",\\\"telemetryType\\\":\\\"logs\\\"}\"
+	\"data\": \"{\\\"replayName\\\":\\\"test-replay\\\",\\\"startTime\\\":\\\"$(if [[ "$OSTYPE" == "darwin"* ]]; then date -v-5M '+%Y-%m-%d %H:%M'; else date -d '30 minutes ago' '+%Y-%m-%d %H:%M'; fi)\\\",\\\"endTime\\\":\\\"$(date '+%Y-%m-%d %H:%M')\\\",\\\"telemetryType\\\":\\\"logs\\\"}\"
 }"
 ```

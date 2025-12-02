@@ -59,7 +59,7 @@ spec:
           region: "us-east-2"
           s3_bucket: "mdai-labs"
           s3_prefix: "replay-basic-logs"
-          s3_partition_format: "%Y/%m/%d/%H/%M" # matches 'minute' partition in awss3 receiver and replay definition
+          s3_partition_format: "year=%Y/month=%m/day=%d/hour=%H/minute=%M" # matches 'minute' partition in awss3 receiver and replay definition
           file_prefix: replay-basic-
 
     connectors:
