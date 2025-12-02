@@ -901,7 +901,7 @@ DATA GENERATION
   logs                           Alias for 'datagen'
 
 USE-CASES
-  use-case <pii|compliance|tail-sampling>
+  use-case <pii|compliance|tail-sampling|buffer-replay>
            [--version VER] [--hub PATH] [--otel PATH] [--apply FILE ...]
                                  Apply a named bundle. If --hub/--otel not given, resolves:
                                  ./use-cases/<case>[/<version>]/{hub.yaml,otel.yaml}
