@@ -30,7 +30,7 @@ spec:
                 s3:
                   s3Region: us-east-2
                   s3Bucket: mdai-labs
-                  s3Partition: minute # matches awss3 exporter s3_partition_format: '%Y/%m/%d/%H/%M' in gateway collector config
+                  s3Partition: minute # matches awss3 exporter s3_partition_format: "year=%Y/month=%m/day=%d/hour=%H/minute=%M" in gateway collector config
                   filePrefix: replay-basic-
                   s3Path: replay-basic-logs
               destination:
