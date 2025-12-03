@@ -1,77 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "PROMETHEUS",
-      "label": "Prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    },
-    {
-      "name": "EXPRESSION",
-      "label": "Expression",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "__expr__"
-    }
-  ],
-  "__elements": {},
-  "__requires": [
-    {
-      "type": "datasource",
-      "id": "__expr__",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "alertlist",
-      "name": "Alert list",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "barchart",
-      "name": "Bar chart",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "gauge",
-      "name": "Gauge",
-      "version": ""
-    },
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "11.2.2+security-01"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "stat",
-      "name": "Stat",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -92,6 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 4,
   "links": [],
   "panels": [
     {
@@ -126,7 +54,7 @@
             "steps": [
               {
                 "color": "#6d3b78",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -157,7 +85,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.2+security-01",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -232,7 +160,7 @@
             "steps": [
               {
                 "color": "#6d3b78",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -262,6 +190,7 @@
         "showValue": "always",
         "stacking": "none",
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         },
@@ -269,7 +198,7 @@
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 100
       },
-      "pluginVersion": "11.2.2+security-01",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -340,7 +269,7 @@
             "steps": [
               {
                 "color": "#6d3b78",
-                "value": null
+                "value": 0
               },
               {
                 "color": "#eabef3",
@@ -408,7 +337,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "11.2.2+security-01",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -522,7 +451,7 @@
             "steps": [
               {
                 "color": "text",
-                "value": null
+                "value": 0
               },
               {
                 "color": "green",
@@ -561,7 +490,7 @@
                   "steps": [
                     {
                       "color": "text",
-                      "value": null
+                      "value": 0
                     },
                     {
                       "color": "orange",
@@ -593,7 +522,7 @@
                   "steps": [
                     {
                       "color": "text",
-                      "value": null
+                      "value": 0
                     },
                     {
                       "color": "green",
@@ -664,7 +593,7 @@
           }
         ]
       },
-      "pluginVersion": "11.2.2+security-01",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -796,6 +725,10 @@
                 ],
                 "operation": "aggregate"
               },
+              "mdai_service": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
               "service": {
                 "aggregations": []
               },
@@ -900,7 +833,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -962,11 +895,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.2.2+security-01",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1057,7 +991,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -1100,11 +1034,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.2.2+security-01",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1156,11 +1091,11 @@
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "description": "Current active filters for $dataType limiting egress of logs.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -1177,23 +1112,26 @@
         ],
         "groupMode": "default",
         "maxItems": 100,
+        "showInactiveAlerts": false,
         "sortOrder": 1,
         "stateFilter": {
           "error": true,
           "firing": true,
           "noData": false,
           "normal": false,
-          "pending": true
+          "pending": true,
+          "recovering": true
         },
         "viewMode": "list"
       },
-      "pluginVersion": "11.2.2+security-01",
+      "pluginVersion": "12.1.1",
       "title": "MDAI Active Filters for $dataType",
       "type": "alertlist"
     }
   ],
+  "preload": false,
   "refresh": "5s",
-  "schemaVersion": 39,
+  "schemaVersion": 41,
   "tags": [
     "mdai"
   ],
@@ -1201,7 +1139,6 @@
     "list": [
       {
         "current": {
-          "selected": true,
           "text": "items_received_by_service_total",
           "value": "items_received_by_service_total"
         },
@@ -1210,10 +1147,8 @@
           "uid": "prometheus"
         },
         "definition": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
-        "hide": 0,
         "includeAll": false,
         "label": "Receiver Metric",
-        "multi": false,
         "name": "receiverMetric",
         "options": [],
         "query": {
@@ -1223,13 +1158,11 @@
         },
         "refresh": 1,
         "regex": "^(?!ALERTS|otelcol_).+",
-        "skipUrlSync": false,
         "sort": 1,
         "type": "query"
       },
       {
         "current": {
-          "selected": false,
           "text": "bytes_received_by_service_total",
           "value": "bytes_received_by_service_total"
         },
@@ -1238,10 +1171,8 @@
           "uid": "prometheus"
         },
         "definition": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
-        "hide": 0,
         "includeAll": false,
         "label": "Receiver Metric by Bytes",
-        "multi": false,
         "name": "receiverMetricByBytes",
         "options": [],
         "query": {
@@ -1251,13 +1182,11 @@
         },
         "refresh": 1,
         "regex": "^(?!ALERTS|otelcol_).+",
-        "skipUrlSync": false,
         "sort": 1,
         "type": "query"
       },
       {
         "current": {
-          "selected": true,
           "text": "items_sent_by_service_total",
           "value": "items_sent_by_service_total"
         },
@@ -1266,10 +1195,8 @@
           "uid": "prometheus"
         },
         "definition": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
-        "hide": 0,
         "includeAll": false,
         "label": "Exporter Metric",
-        "multi": false,
         "name": "exporterMetric",
         "options": [],
         "query": {
@@ -1279,13 +1206,11 @@
         },
         "refresh": 1,
         "regex": "^(?!ALERTS|otelcol_).+",
-        "skipUrlSync": false,
         "sort": 2,
         "type": "query"
       },
       {
         "current": {
-          "selected": true,
           "text": "bytes_sent_by_service_total",
           "value": "bytes_sent_by_service_total"
         },
@@ -1294,10 +1219,8 @@
           "uid": "prometheus"
         },
         "definition": "label_values({__name__=~\".+\", data_type!=\"\"}, __name__)",
-        "hide": 0,
         "includeAll": false,
         "label": "Exporter Metric by Bytes",
-        "multi": false,
         "name": "exporterMetricByBytes",
         "options": [],
         "query": {
@@ -1307,20 +1230,16 @@
         },
         "refresh": 1,
         "regex": "^(?!ALERTS|otelcol_).+",
-        "skipUrlSync": false,
         "sort": 2,
         "type": "query"
       },
       {
         "current": {
-          "selected": false,
           "text": "logs",
           "value": "logs"
         },
-        "hide": 0,
         "includeAll": false,
         "label": "Data Type",
-        "multi": false,
         "name": "dataType",
         "options": [
           {
@@ -1340,17 +1259,13 @@
           }
         ],
         "query": "logs,metrics,traces",
-        "queryValue": "",
-        "skipUrlSync": false,
         "type": "custom"
       },
       {
         "current": {
-          "selected": false,
           "text": "",
           "value": ""
         },
-        "hide": 0,
         "label": "Group By Label",
         "name": "groupByLabel",
         "options": [
@@ -1360,8 +1275,7 @@
             "value": ""
           }
         ],
-        "query": "",
-        "skipUrlSync": false,
+        "query": "mdai_service",
         "type": "textbox"
       }
     ]
@@ -1374,6 +1288,5 @@
   "timezone": "browser",
   "title": "MDAI Data Management",
   "uid": "de978rcegwfswb",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

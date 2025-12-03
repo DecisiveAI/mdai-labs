@@ -27,3 +27,7 @@ configMapGenerator:
   - name: controller-runtime-metrics-cm
     files:
       - controller-runtime-metrics.json
+
+  - name: nats-cm
+    files:
+      - nats.json
