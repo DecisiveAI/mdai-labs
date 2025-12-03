@@ -386,6 +386,7 @@ act_install_mdai_stack() {
     --from-file=mdai-cluster-usage.json=files/dashboards/mdai-cluster-usage.json \
     --from-file=mdai-audit-streams.json=files/dashboards/mdai-audit-streams.json \
     --from-file=controller-runtime-metrics.json=files/dashboards/controller-runtime-metrics.json \
+    --from-file=nats.json=files/dashboards/nats.json \
     --dry-run=client -o yaml \
   | kubectl -n mdai apply --server-side -f -
 

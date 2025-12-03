@@ -38,5 +38,7 @@ kubeprometheusstack:
         # otel-collector: {}    # files/dashboards/otel-collector.json
         otel-collector-2: {}    # files/dashboards/otel-collector-2.json
         mdai-cluster-usage: {}   #files/dashboards/mdai-cluster-usage.json
-        mdai-audit-streams: {}   #files/dashboards/mdai-audit-streams.json
         controller-runtime-metrics: {}   #files/dashboards/controller-runtime-metrics.json
+        mdai-audit-streams: {}   #files/dashboards/mdai-audit-streams.json
+        mdai-audit-streams: {}   #files/dashboards/mdai-audit-streams.json
+        nats: {}   #files/dashboards/controller-runtime-metrics.json
