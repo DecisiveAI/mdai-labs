@@ -40,5 +40,4 @@ kubeprometheusstack:
         mdai-cluster-usage: {}   #files/dashboards/mdai-cluster-usage.json
         controller-runtime-metrics: {}   #files/dashboards/controller-runtime-metrics.json
         mdai-audit-streams: {}   #files/dashboards/mdai-audit-streams.json
-        mdai-audit-streams: {}   #files/dashboards/mdai-audit-streams.json
         nats: {}   #files/dashboards/controller-runtime-metrics.json
