@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opamp-supervisor-config
+  namespace: mdai
+data:
+  supervisor.yaml: |
+    server:
+      endpoint: ws://host.docker.internal:8081/opamp
+      # endpoint: "ws://mdai-gateway.mdai.svc.cluster.local:8081/opamp"
+      tls:
+        # Disable verification to test locally.
+        insecure_skip_verify: true
+    capabilities:
+      accepts_remote_config: true
+      accepts_restart_command: true
+      reports_effective_config: true
+      reports_remote_config: true
+      reports_available_components: true
+      reports_own_logs: true  # the collector will report its own logs to the destination specified by the server.
+    agent:
+      executable: /usr/bin/otelcol-contrib
+      opamp_server_port: 4320
+      # run_as: oteluser # doesn't seem to work? invalid key according to bootstrap process
+      config_files:
+        # - base_config.yaml # can provide a base collector config if desired
+        - $OPAMP_EXTENSION_CONFIG
+        - $OWN_TELEMETRY_CONFIG
+        - $REMOTE_CONFIG
+    healthcheck:
+      endpoint: localhost:13133
+    storage:
+      directory: .
+---

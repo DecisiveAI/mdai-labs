@@ -1,0 +1,11 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraMounts:
+  - hostPath: /Users/trent.vigar/src/mdai-labs/experiments/opamp_supervisor/otelcol-contrib
+    containerPath: /usr/bin/otelcol-contrib
+- role: worker # Include this section for every worker node you have
+  extraMounts:
+  - hostPath: /Users/trent.vigar/src/mdai-labs/experiments/opamp_supervisor/otelcol-contrib
+    containerPath: /usr/bin/otelcol-contrib
