@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opamp-supervisor
+  namespace: mdai
+  labels:
+    app: opamp-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opamp-supervisor
+  template:
+    metadata:
+      labels:
+        app: opamp-supervisor
+    spec:
+      containers:
+        - name: opampsupervisor
+          image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-opampsupervisor:latest
+          imagePullPolicy: IfNotPresent
+          # The OpAMP Supervisor listens on a port for communication with the managed
+          # OpenTelemetry Collector, and/or its own internal metrics.
+          # Check the official documentation for the default/configurable port.
+          ports:
+            - containerPort: 13133
+              name: health
+            - containerPort: 4320 # Example: OpAMP-related port, often used for Supervisor/Agent comms
+              name: opamp-comms
+
+          args:
+            - "--config=/conf/supervisor.yaml"
+
+          volumeMounts:
+            - name: opamp-config-volume
+              mountPath: /conf
+              readOnly: true
+            - name: otelcol-binary
+              mountPath: /usr/bin/otelcol-contrib
+
+      volumes:
+        - name: opamp-config-volume
+          configMap:
+            name: opamp-supervisor-config
+        - name: otelcol-binary
+          hostPath:
+            path: /usr/bin/otelcol-contrib
+            type: File
+---
