@@ -1,0 +1,44 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: gateway
+  namespace: mdai
+spec:
+  mode: deployment
+  image: otel/opentelemetry-collector-contrib:latest
+
+  config:
+    receivers:
+      fluentforward:
+        endpoint: "0.0.0.0:8006"
+      otlp:
+        protocols:
+          http: {}
+          grpc: {}
+
+    processors:
+      batch: {}
+
+    exporters:
+      otlphttp/dal:
+        endpoint: "http://mdaidal-sample.mdai.svc.cluster.local:4318"
+        tls:
+          insecure: true
+        compression: "gzip"
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlphttp/dal]
+
+        logs:
+          receivers: [otlp, fluentforward]
+          processors: [batch]
+          exporters: [otlphttp/dal]
+
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlphttp/dal]
