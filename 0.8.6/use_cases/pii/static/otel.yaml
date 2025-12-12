@@ -2,7 +2,7 @@ apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   labels:
-    mydecisive.ai/hub-name: mdaihub-compliance
+    mydecisive.ai/hub-name: mdaihub-pii
   name: gateway
   namespace: mdai
 spec:
