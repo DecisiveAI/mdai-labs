@@ -36,7 +36,8 @@ spec:
         timeout: 13s
 
     exporters:
-      debug: {}
+      debug:
+        verbosity: normal
 
     service:
       telemetry:

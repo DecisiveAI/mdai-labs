@@ -37,7 +37,7 @@ spec:
       # defaultValue: replace_pattern(attributes["cc"], "\\b(?:\\d[ -]*?){0,12}(\\d{4})\\b", "****-****-****-$1")
       serializeAs:
         - name: "CC_REPLACE_FN"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     # regex patterns
@@ -47,7 +47,7 @@ spec:
       # defaultValue: "\\b(?:\\d[ -]*?){0,12}(\\d{4})\\b"
       serializeAs:
         - name: "EMAIL_REGEX"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: cc_regex
@@ -55,7 +55,7 @@ spec:
       # defaultValue: "\\b(?:\\d[ -]*?){0,12}(\\d{4})\\b"
       serializeAs:
         - name: "CC_REGEX"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: phone_regex
@@ -63,7 +63,7 @@ spec:
       # defaultValue: "\\b(?:\\+?1[-.\\s]?)?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?(\\d{4})\\b"
       serializeAs:
         - name: "PHONE_REGEX"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: address_regex
@@ -71,7 +71,7 @@ spec:
       # defaultValue: "\\b(\\d{1,5})\\s([\\w\\s]+),\\s([\\w\\s]+),\\s([A-Z]{2})\\s(\\d{5})\\b"
       serializeAs:
         - name: "ADDRESS_REGEX"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: ssn_regex
@@ -79,7 +79,7 @@ spec:
       # defaultValue: "\\b\\d{3}-\\d{2}-(\\d{4})\\b"
       serializeAs:
         - name: "SSN_REGEX"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: name_regex
@@ -87,7 +87,7 @@ spec:
       # defaultValue: ".*"
       serializeAs:
         - name: "NAME_REGEX"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     # replace templates
@@ -97,7 +97,7 @@ spec:
       # defaultValue: "$1***@$2**.***"
       serializeAs:
         - name: "EMAIL_TEMPLATE"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: cc_template
@@ -105,7 +105,7 @@ spec:
       # defaultValue: "****-****-****-$1"
       serializeAs:
         - name: "CC_TEMPLATE"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: phone_template
@@ -113,7 +113,7 @@ spec:
       # defaultValue:  "***-***-$1")
       serializeAs:
         - name: "PHONE_TEMPLATE"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: address_template
@@ -121,7 +121,7 @@ spec:
       # defaultValue: "$1 **** REDACTED"
       serializeAs:
         - name: "ADDRESS_TEMPLATE"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: ssn_template
@@ -129,7 +129,7 @@ spec:
       # defaultValue: "***-**-$1"
       serializeAs:
         - name: "SSN_TEMPLATE"
-      type: string
+      dataType: string
       storageType: "mdai-valkey"
 
     - key: name_template
@@ -137,16 +137,5 @@ spec:
       # defaultValue: "***REDACTED****"
       serializeAs:
         - name: "NAME_TEMPLATE"
-      type: string
-      storageType: "mdai-valkey"
-
-
-      type: manual
-      serializeAs:
-        - name: "CRIT_SERVICES"
-          transformers:
-            - type: join
-              join:
-                delimiter: "|"
-      dataType: set
+      dataType: string
       storageType: "mdai-valkey"
