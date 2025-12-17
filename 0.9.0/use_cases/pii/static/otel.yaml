@@ -53,7 +53,7 @@ spec:
           - context: log
             statements:
               # Redact credit card numbers (keep last 4 digits)
-              - ${env:CC_REPLACE_FN}
+              - replace_pattern(attributes["cc"], "\\b(?:\\d[ -]*?){0,12}(\\d{4})\\b", "****-****-****-$1")
 
               # Redact email addresses (keep first 3 characters of username)
               - replace_pattern(attributes["email"], "\\b([a-zA-Z0-9._%+-]{3})[a-zA-Z0-9._%+-]*@([a-zA-Z0-9]{2})[a-zA-Z0-9.-]*\\.(\\w{2,})\\b", "$1***@$2**.***")
@@ -83,7 +83,8 @@ spec:
 
 
     exporters:
-      debug: {}
+      debug:
+        verbosity: normal
 
     service:
       telemetry:
@@ -100,5 +101,11 @@ spec:
       pipelines:
         logs/customer_pipeline:
           receivers: [fluentforward]
-          processors: [memory_limiter, batch]
+          processors: [
+            attributes/redact_pii_fields,
+            attributes/hash_pii_fields,
+            transform/scrub_pii_fields,
+            memory_limiter,
+            batch,
+          ]
           exporters: [debug]
