@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: opamp-supervisor-service
+  namespace: mdai
+  labels:
+    app: opamp-supervisor
+spec:
+  selector:
+    app: opamp-supervisor
+  ports:
+    # Port for internal metrics/health checks
+    - name: health
+      protocol: TCP
+      port: 13133
+      targetPort: 13133
+    # Port for OpAMP-related internal communication
+    - name: opamp-comms
+      protocol: TCP
+      port: 4320
+      targetPort: 4320
+  type: ClusterIP
