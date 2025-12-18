@@ -24,6 +24,14 @@ spec:
               join:
                 delimiter: ","
       dataType: set
+    - key: alerting_data_type
+      dataType: string
+      serializeAs:
+        - name: "ALERTING_DATA_TYPE"
+    - key: alerting_triggered
+      dataType: boolean
+      serializeAs:
+        - name: "ALERT_TRIGGERED"
 
   prometheusAlerts:
     - name: super_loud_services
@@ -38,25 +46,50 @@ spec:
       keep_firing_for: 1m
 
   rules:
-    - eventRef: super_loud_services
-      workflow:
-        # remove the service from the other list first
-        - handlerRef: HandleRemoveNoisyServiceFromSet
-          args:
-            payload_val_ref: service_name
-            variable_ref: loud_service_list
-        - handlerRef: HandleNoisyServiceAlert
-          args:
-            payload_val_ref: service_name
-            variable_ref: super_loud_service_list
-    - eventRef: loud_services
-      workflow:
-        # remove the service from the other list first
-        - handlerRef: HandleRemoveNoisyServiceFromSet
-          args:
-            payload_val_ref: service_name
-            variable_ref: super_loud_service_list
-        - handlerRef: HandleNoisyServiceAlert
-          args:
-            payload_val_ref: service_name
-            variable_ref: loud_service_list
+    # SUPER LOUD SERVICES
+    - name: super_loud_services_resolved
+      when:
+        alertName: super_loud_services
+        status: resolved
+      then:
+        - removeFromSet:
+            set: super_loud_service_list
+            value: ${trigger:payload.labels.service_name}
+    - name: super_loud_services_firing
+      when:
+        alertName: super_loud_services
+        status: firing
+      then:
+        - addToSet:
+            set: super_loud_service_list
+            value: ${trigger:payload.labels.service_name}
+        - setVariable:
+            scalar: alerting_data_type
+            value: ${trigger:payload.labels.data_type}
+        - setVariable:
+            scalar: alerting_triggered
+            value: "true"
+
+    # LOUD SERVICES
+    - name: loud_services_resolved
+      when:
+        alertName: loud_services
+        status: resolved
+      then:
+        - removeFromSet:
+            set: loud_service_list
+            value: ${trigger:payload.labels.service_name}
+    - name: loud_services_firing
+      when:
+        alertName: loud_services
+        status: firing
+      then:
+        - addToSet:
+            set: loud_service_list
+            value: ${trigger:payload.labels.service_name}
+        - setVariable:
+            scalar: alerting_data_type
+            value: ${trigger:payload.labels.data_type}
+        - setVariable:
+            scalar: alerting_triggered
+            value: "true"
