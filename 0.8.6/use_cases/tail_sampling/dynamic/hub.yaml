@@ -25,7 +25,7 @@ spec:
                 delimiter: ","
       dataType: set
 
-  prometheusAlerts:
+  prometheusAlert:
     - name: super_loud_services
       expr: 'sum(increase(trace_span_service_count_total{service_name!=""}[5m])) by (service_name) >= 1000'
       severity: warning
@@ -37,7 +37,7 @@ spec:
       for: 1m
       keep_firing_for: 1m
 
-  rules:
+  automations:
     - eventRef: super_loud_services
       workflow:
         # remove the service from the other list first
