@@ -1,6 +1,8 @@
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
+  labels:
+    mydecisive.ai/hub-name: mdaihub-ts
   name: trace-balancer
   namespace: mdai
 spec:
@@ -18,9 +20,9 @@ spec:
     receivers:
       otlp/from_agent:
         protocols:
-          grpc: 
+          grpc:
             endpoint: '0.0.0.0:4317'
-          http: 
+          http:
             endpoint: '0.0.0.0:4318'
 
     extensions:
@@ -32,6 +34,7 @@ spec:
 
     exporters:
       loadbalancing:
+        routing_key: traceID
         protocol:
           otlp:
             compression: gzip
@@ -49,8 +52,10 @@ spec:
     connectors:
       count/service:
         spans:
-          trace.span.service.count:
-            description: Span count by service.
+          trace.span.service.total:
+            description: Total span count by service (all spans).
+          trace.span.service.root:
+            description: Root span count by service.
             conditions:
               - 'IsRootSpan()'
 

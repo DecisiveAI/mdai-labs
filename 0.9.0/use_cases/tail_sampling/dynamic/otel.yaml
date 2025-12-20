@@ -1,11 +1,13 @@
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
+  labels:
+    mydecisive.ai/hub-name: mdaihub-ts
   name: trace-balancer
   namespace: mdai
 spec:
   serviceAccount: loadbalancer
-  image: otel/opentelemetry-collector-contrib:0.127.0
+  image: otel/opentelemetry-collector-contrib:latest
   replicas: 1
   resources:
     limits:
@@ -18,20 +20,32 @@ spec:
     receivers:
       otlp/from_agent:
         protocols:
-          grpc: 
-            endpoint: '0.0.0.0:4317'
-          http: 
-            endpoint: '0.0.0.0:4318'
+          grpc:
+            endpoint: "0.0.0.0:4317"
+          http:
+            endpoint: "0.0.0.0:4318"
 
     extensions:
       health_check:
-        endpoint: 0.0.0.0:13133
+        endpoint: "0.0.0.0:13133"
 
     processors:
+      memory_limiter:
+        # Keep this safely below the pod limit (256Mi). Tune as needed.
+        limit_mib: 200
+        spike_limit_mib: 50
+        check_interval: 1s
+
+      batch:
+        send_batch_size: 200
+        send_batch_max_size: 1000
+        timeout: 5s
+
       deltatocumulative: {}
 
     exporters:
       loadbalancing:
+        routing_key: traceID
         protocol:
           otlp:
             compression: gzip
@@ -40,8 +54,9 @@ spec:
         resolver:
           k8s:
             service: gateway-collector-headless.mdai
+
       prometheus:
-        endpoint: 0.0.0.0:8899
+        endpoint: "0.0.0.0:8899"
         metric_expiration: 180m
         resource_to_telemetry_conversion:
           enabled: true
@@ -49,8 +64,10 @@ spec:
     connectors:
       count/service:
         spans:
-          trace.span.service.count:
-            description: Span count by service.
+          trace.span.service.total:
+            description: Total span count by service (all spans).
+          trace.span.service.root:
+            description: Root span count by service.
             conditions:
               - 'IsRootSpan()'
 
@@ -69,12 +86,13 @@ spec:
       pipelines:
         traces:
           receivers: [otlp/from_agent]
-          processors: []
+          processors: [memory_limiter, batch]
           exporters: [loadbalancing, count/service]
         metrics:
           receivers: [count/service]
           processors: [deltatocumulative]
           exporters: [prometheus]
+
 ---
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
@@ -85,7 +103,7 @@ metadata:
     mydecisive.ai/hub-name: mdaihub-ts
 spec:
   managementState: managed
-  image: otel/opentelemetry-collector-contrib:0.127.0
+  image: otel/opentelemetry-collector-contrib:latest
   replicas: 1
   resources:
     limits:
@@ -109,9 +127,13 @@ spec:
         endpoint: "${env:MY_POD_IP}:13133"
 
     processors:
+      memory_limiter:
+        limit_mib: 420
+        spike_limit_mib: 80
+        check_interval: 1s
+
       tail_sampling:
-        decision_wait: 10s # TODO do we have a number for this?
-        # expected_new_traces_per_sec: _ # TODO: do we have a number for this?
+        decision_wait: 10s
         policies:
           - name: keep-all-the-errors
             type: and
@@ -120,8 +142,7 @@ spec:
                 - name: error-sampling
                   type: status_code
                   status_code:
-                    status_codes:
-                      - ERROR
+                    status_codes: [ERROR]
           - name: probabilistic-sample-top-talkers
             type: and
             and:
@@ -130,20 +151,17 @@ spec:
                   type: string_attribute
                   string_attribute:
                     key: operation
-                    values:
-                      - "high-volume-op"
+                    values: ["high-volume-op"]
                 - name: probabilistic-policy
                   type: probabilistic
                   probabilistic:
-                    sampling_percentage: 10  # sample 10%
+                    sampling_percentage: 10
           - name: always-sample-non-top-talkers
             type: ottl_condition
-            ottl_condition: {
-              error_mode: ignore,
-              span: [
-                "attributes[\"operation\"] != \"high-volume-op\"",
-              ]
-            }
+            ottl_condition:
+              error_mode: ignore
+              span:
+                - "attributes[\"operation\"] != \"high-volume-op\""
 
       batch:
         send_batch_size: 50
@@ -169,5 +187,5 @@ spec:
       pipelines:
         traces:
           receivers: [otlp/from_lb]
-          processors: [tail_sampling, batch]
+          processors: [memory_limiter, tail_sampling, batch]
           exporters: [debug/to_vendor]
