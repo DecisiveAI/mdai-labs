@@ -1,3 +1,4 @@
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -7,20 +8,6 @@ rules:
   - apiGroups: ["discovery.k8s.io"]
     resources: ["endpointslices"]
     verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: loadbalancer-endpointslices-reader
-  namespace: mdai
-subjects:
-  - kind: ServiceAccount
-    name: loadbalancer
-    namespace: mdai
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: loadbalancer-endpointslices-reader
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

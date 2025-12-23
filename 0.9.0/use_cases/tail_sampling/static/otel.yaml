@@ -1,8 +1,6 @@
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
-  labels:
-    mydecisive.ai/hub-name: mdaihub-ts
   name: trace-balancer
   namespace: mdai
 spec:
@@ -86,8 +84,6 @@ kind: OpenTelemetryCollector
 metadata:
   name: gateway
   namespace: mdai
-  labels:
-    mydecisive.ai/hub-name: mdaihub-ts
 spec:
   managementState: managed
   image: otel/opentelemetry-collector-contrib:0.127.0
@@ -99,9 +95,6 @@ spec:
     requests:
       memory: "256Mi"
       cpu: "100m"
-  envFrom:
-    - configMapRef:
-        name: mdaihub-ts-variables
   config:
     receivers:
       otlp/from_lb:
@@ -173,6 +166,7 @@ spec:
       extensions: [health_check]
       pipelines:
         traces:
+          # ensure metrics are computed before sampling, ensuring their accuracy
           receivers: [otlp/from_lb]
           processors: [tail_sampling, batch]
           exporters: [debug/to_vendor]

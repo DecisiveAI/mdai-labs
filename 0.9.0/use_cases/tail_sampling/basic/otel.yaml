@@ -1,8 +1,6 @@
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
-  labels:
-    mydecisive.ai/hub-name: mdaihub-ts
   name: trace-balancer
   namespace: mdai
 spec:
@@ -86,12 +84,10 @@ kind: OpenTelemetryCollector
 metadata:
   name: gateway
   namespace: mdai
-  labels:
-    mydecisive.ai/hub-name: mdaihub-ts
 spec:
   managementState: managed
   image: otel/opentelemetry-collector-contrib:0.127.0
-  replicas: 1
+  replicas: 3
   resources:
     limits:
       memory: "512Mi"
@@ -99,9 +95,6 @@ spec:
     requests:
       memory: "256Mi"
       cpu: "100m"
-  envFrom:
-    - configMapRef:
-        name: mdaihub-ts-variables
   config:
     receivers:
       otlp/from_lb:
@@ -111,45 +104,9 @@ spec:
 
     extensions:
       health_check:
-        endpoint: "${env:MY_POD_IP}:13133"
+        endpoint: "0.0.0.0:13133"
 
     processors:
-      tail_sampling:
-        decision_wait: 10s # TODO do we have a number for this?
-        # expected_new_traces_per_sec: _ # TODO: do we have a number for this?
-        policies:
-          - name: keep-all-the-errors
-            type: and
-            and:
-              and_sub_policy:
-                - name: error-sampling
-                  type: status_code
-                  status_code:
-                    status_codes:
-                      - ERROR
-          - name: probabilistic-sample-top-talkers
-            type: and
-            and:
-              and_sub_policy:
-                - name: services-using-tail-sampling
-                  type: string_attribute
-                  string_attribute:
-                    key: operation
-                    values:
-                      - "high-volume-op"
-                - name: probabilistic-policy
-                  type: probabilistic
-                  probabilistic:
-                    sampling_percentage: 10  # sample 10%
-          - name: always-sample-non-top-talkers
-            type: ottl_condition
-            ottl_condition: {
-              error_mode: ignore,
-              span: [
-                "attributes[\"operation\"] != \"high-volume-op\"",
-              ]
-            }
-
       batch:
         send_batch_size: 50
         send_batch_max_size: 200
@@ -158,7 +115,6 @@ spec:
     exporters:
       debug/to_vendor:
         verbosity: detailed
-
     service:
       telemetry:
         resource:
@@ -173,6 +129,7 @@ spec:
       extensions: [health_check]
       pipelines:
         traces:
+          # ensure metrics are computed before sampling, ensuring their accuracy
           receivers: [otlp/from_lb]
-          processors: [tail_sampling, batch]
+          processors: [batch]
           exporters: [debug/to_vendor]
