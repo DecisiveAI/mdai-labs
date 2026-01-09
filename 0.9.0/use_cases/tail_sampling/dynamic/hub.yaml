@@ -1,0 +1,108 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-ts
+  namespace: mdai
+spec:
+  variables:
+    - key: loud_service_list
+      serializeAs:
+        - name: "LOUD_SERVICE_LIST"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      dataType: set
+    - key: loudest_services
+      serializeAs:
+        - name: "LOUDEST_SERVICES"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      dataType: set
+    - key: super_loud_service_list
+      serializeAs:
+        - name: "SUPER_LOUD_SERVICE_LIST"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      dataType: set
+    - key: alerting_data_type
+      dataType: string
+      serializeAs:
+        - name: "ALERTING_DATA_TYPE"
+    - key: alerting_triggered
+      dataType: boolean
+      serializeAs:
+        - name: "ALERT_TRIGGERED"
+
+  prometheusAlerts:
+    - name: loudest_services
+      expr: 'sum(increase(trace_span_service_total{service_name!=""}[5m])) by (service_name) >= 2000'
+      severity: warning
+      for: 1m
+      keep_firing_for: 1m
+    - name: super_loud_services
+      expr: 'sum(increase(trace_span_service_total{service_name!=""}[5m])) by (service_name) >= 1000 and sum(increase(trace_span_service_total{service_name!=""}[5m])) by (service_name) < 2000'
+      severity: warning
+      for: 1m
+      keep_firing_for: 1m
+    - name: loud_services
+      expr: '1000 > sum(increase(trace_span_service_total{service_name!=""}[5m])) by (service_name) >= 200'
+      severity: warning
+      for: 1m
+      keep_firing_for: 1m
+
+  rules:
+    # SUPER LOUD SERVICES
+    - name: super_loud_services_resolved
+      when:
+        alertName: super_loud_services
+        status: resolved
+      then:
+        - removeFromSet:
+            set: super_loud_service_list
+            value: ${trigger:payload.labels.service_name}
+    - name: super_loud_services_firing
+      when:
+        alertName: super_loud_services
+        status: firing
+      then:
+        - addToSet:
+            set: super_loud_service_list
+            value: ${trigger:payload.labels.service_name}
+        - setVariable:
+            scalar: alerting_data_type
+            value: ${trigger:payload.labels.data_type}
+        - setVariable:
+            scalar: alerting_triggered
+            value: "true"
+
+    # LOUD SERVICES
+    - name: loud_services_resolved
+      when:
+        alertName: loud_services
+        status: resolved
+      then:
+        - removeFromSet:
+            set: loud_service_list
+            value: ${trigger:payload.labels.service_name}
+    - name: loud_services_firing
+      when:
+        alertName: loud_services
+        status: firing
+      then:
+        - addToSet:
+            set: loud_service_list
+            value: ${trigger:payload.labels.service_name}
+        - setVariable:
+            scalar: alerting_data_type
+            value: ${trigger:payload.labels.data_type}
+        - setVariable:
+            scalar: alerting_triggered
+            value: "true"

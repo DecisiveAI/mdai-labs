@@ -1,0 +1,9 @@
+apiVersion: hub.mydecisive.ai/v1
+kind: MdaiHub
+metadata:
+  labels:
+    app.kubernetes.io/name: mdai-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mdaihub-ts
+  namespace: mdai
+spec:

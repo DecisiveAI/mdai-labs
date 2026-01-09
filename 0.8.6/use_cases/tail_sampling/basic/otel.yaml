@@ -18,9 +18,9 @@ spec:
     receivers:
       otlp/from_agent:
         protocols:
-          grpc: 
+          grpc:
             endpoint: '0.0.0.0:4317'
-          http: 
+          http:
             endpoint: '0.0.0.0:4318'
 
     extensions:
@@ -32,6 +32,7 @@ spec:
 
     exporters:
       loadbalancing:
+        routing_key: traceID
         protocol:
           otlp:
             compression: gzip
@@ -49,8 +50,10 @@ spec:
     connectors:
       count/service:
         spans:
-          trace.span.service.count:
-            description: Span count by service.
+          trace.span.service.total:
+            description: Total span count by service (all spans).
+          trace.span.service.root:
+            description: Root span count by service.
             conditions:
               - 'IsRootSpan()'
 
@@ -84,7 +87,7 @@ metadata:
 spec:
   managementState: managed
   image: otel/opentelemetry-collector-contrib:0.127.0
-  replicas: 1
+  replicas: 3
   resources:
     limits:
       memory: "512Mi"
@@ -112,7 +115,7 @@ spec:
     exporters:
       debug/to_vendor:
         verbosity: detailed
-      
+
     service:
       telemetry:
         resource:
