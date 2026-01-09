@@ -143,6 +143,19 @@ spec:
                   type: status_code
                   status_code:
                     status_codes: [ERROR]
+          - name: probabilistic-sample-loudest-talkers
+            type: and
+            and:
+              and_sub_policy:
+                - name: services-using-tail-sampling
+                  type: string_attribute
+                  string_attribute:
+                    key: operation
+                    values: ${env:LOUDEST_SERVICES}
+                - name: probabilistic-policy
+                  type: probabilistic
+                  probabilistic:
+                    sampling_percentage: 90
           - name: probabilistic-sample-top-talkers
             type: and
             and:

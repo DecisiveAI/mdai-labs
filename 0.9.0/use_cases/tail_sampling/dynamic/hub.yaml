@@ -16,6 +16,14 @@ spec:
               join:
                 delimiter: ","
       dataType: set
+    - key: loudest_services
+      serializeAs:
+        - name: "LOUDEST_SERVICES"
+          transformers:
+            - type: join
+              join:
+                delimiter: ","
+      dataType: set
     - key: super_loud_service_list
       serializeAs:
         - name: "SUPER_LOUD_SERVICE_LIST"
@@ -34,13 +42,18 @@ spec:
         - name: "ALERT_TRIGGERED"
 
   prometheusAlerts:
+    - name: loudest_services
+      expr: 'sum(increase(trace_span_service_total{service_name!=""}[5m])) by (service_name) >= 2000'
+      severity: warning
+      for: 1m
+      keep_firing_for: 1m
     - name: super_loud_services
-      expr: 'sum(increase(trace_span_service_count_total{service_name!=""}[5m])) by (service_name) >= 1000'
+      expr: 'sum(increase(trace_span_service_total{service_name!=""}[5m])) by (service_name) >= 1000 and sum(increase(trace_span_service_total{service_name!=""}[5m])) by (service_name) < 2000'
       severity: warning
       for: 1m
       keep_firing_for: 1m
     - name: loud_services
-      expr: '1000 > sum(increase(trace_span_service_count_total{service_name!=""}[5m])) by (service_name) >= 200'
+      expr: '1000 > sum(increase(trace_span_service_total{service_name!=""}[5m])) by (service_name) >= 200'
       severity: warning
       for: 1m
       keep_firing_for: 1m

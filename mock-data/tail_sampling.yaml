@@ -67,7 +67,7 @@ spec:
                 - "--traces"
                 - "50"
                 - "--telemetry-attributes"
-                - 'attribute_i_care_about="high-volume-op"'
+                - 'operation="high-volume-op"'
                 - "--status-code"
                 - "Error"
           restartPolicy: OnFailure
